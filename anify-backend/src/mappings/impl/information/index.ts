@@ -1,18 +1,15 @@
-import Http from "../../../helper/request";
-import { ProviderType } from "../../../types/enums";
-import { Anime, AnimeInfo, Chapter, Episode, Manga, MangaInfo, MediaInfoKeys } from "../../../types/types";
+import { MediaProvider } from "../../../types/impl/mappings/impl/mediaProvider";
+import { type IChapter, type IEpisode, MediaFormat, ProviderType } from "../../../types";
+import type { IMedia } from "../../../types/impl/mappings";
+import type { AnimeInfo, MangaInfo, MediaInfoKeys } from "../../../types/impl/mappings/impl/mediaInfo";
 
-export default abstract class InformationProvider<T extends Anime | Manga, U extends AnimeInfo | MangaInfo> {
+export default abstract class InformationProvider<T extends IMedia, U extends AnimeInfo | MangaInfo> extends MediaProvider {
     abstract id: string;
     abstract url: string;
+    abstract formats: MediaFormat[];
 
     public providerType: ProviderType = ProviderType.INFORMATION;
     public preferredTitle: "english" | "romaji" | "native" = "english";
-
-    public customProxy: string | undefined;
-    public needsProxy: boolean = false;
-    public useGoogleTranslate: boolean = true;
-    public overrideProxy: boolean = false;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async info(media: T): Promise<U | undefined> {
@@ -20,7 +17,7 @@ export default abstract class InformationProvider<T extends Anime | Manga, U ext
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async fetchContentData(media: T): Promise<Episode[] | Chapter[] | undefined> {
+    async fetchContentData(media: T): Promise<IEpisode[] | IChapter[] | undefined> {
         return undefined;
     }
 
@@ -32,16 +29,8 @@ export default abstract class InformationProvider<T extends Anime | Manga, U ext
         return [];
     }
 
-    async request(url: string, config: RequestInit = {}, proxyRequest?: boolean): Promise<Response> {
-        if (proxyRequest === undefined && this.needsProxy) proxyRequest = true;
-        if (proxyRequest !== undefined && proxyRequest === false && this.needsProxy) proxyRequest = false;
-        if (proxyRequest === undefined && !this.needsProxy) proxyRequest = false;
-        if (proxyRequest !== undefined && proxyRequest === true && !this.needsProxy) proxyRequest = true;
-
-        return Http.request(this.id, this.useGoogleTranslate, url, config, proxyRequest, 0, this.customProxy);
-    }
-
-    async proxyCheck(): Promise<boolean | undefined> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async proxyCheck(_proxyUrl: string): Promise<boolean | undefined> {
         return undefined;
     }
 }

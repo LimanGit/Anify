@@ -1,86 +1,96 @@
-import { Anime, AnimeInfo, Manga, MangaInfo } from "../types/types";
-import AnimeProvider from "./impl/anime";
-import AnimePahe from "./impl/anime/animepahe";
-import GogoAnime from "./impl/anime/gogoanime";
-import NineAnime from "./impl/anime/nineanime";
-import Zoro from "./impl/anime/zoro";
-import BaseProvider from "./impl/base";
-import AniListBase from "./impl/base/anilist";
-import ManagDexBase from "./impl/base/mangadex";
-import NovelUpdatesBase from "./impl/base/novelupdates";
-import InformationProvider from "./impl/information";
-import AniDB from "./impl/information/anidb";
-import AniList from "./impl/information/anilist";
-import ComicKInfo from "./impl/information/comick";
-import Kitsu from "./impl/information/kitsu";
-import MAL from "./impl/information/mal";
-import MangaDexInfo from "./impl/information/mangadex";
-import NovelUpdatesInfo from "./impl/information/novelupdates";
-import TMDB from "./impl/information/tmdb";
-import TVDB from "./impl/information/tvdb";
-import MangaProvider from "./impl/manga";
-import FirstKissNovel from "./impl/manga/1stkissnovel";
-import ComicK from "./impl/manga/comick";
-import JNovels from "./impl/manga/jnovels";
-import MangaDex from "./impl/manga/mangadex";
-import MangaFire from "./impl/manga/mangafire";
-import Mangakakalot from "./impl/manga/mangakakalot";
-import MangaPill from "./impl/manga/mangapill";
-import MangaSee from "./impl/manga/mangasee";
-import NovelUpdates from "./impl/manga/novelupdates";
-import NovelHall from "./impl/manga/novelhall";
-import MetaProvider from "./impl/meta";
-import AniDBMeta from "./impl/meta/anidb";
-import AniListMeta from "./impl/meta/anilist";
-import KitsuMeta from "./impl/meta/kitsu";
-import MALMeta from "./impl/meta/mal";
-import TheMovieDB from "./impl/meta/tmdb";
-import TheTVDB from "./impl/meta/tvdb";
-import Sudatchi from "./impl/anime/sudatchi";
-
-const ANIME_PROVIDERS: AnimeProvider[] = [new NineAnime(), new AnimePahe(), new GogoAnime(), new Zoro(), new Sudatchi()];
-const animeProviders: Record<string, AnimeProvider> = ANIME_PROVIDERS.reduce(
-    (acc, provider) => {
-        acc[provider.id] = provider;
-        return acc;
+export const BASE_PROVIDERS = [
+    async () => {
+        const { default: AniListBase } = await import("./impl/base/impl/anilist");
+        return new AniListBase();
     },
-    {} as Record<string, AnimeProvider>,
-);
-
-const MANGA_PROVIDERS: MangaProvider[] = [new ComicK(), new MangaDex(), new MangaSee(), new MangaFire(), new Mangakakalot(), new MangaPill(), new JNovels(), new NovelUpdates(), new FirstKissNovel(), new NovelHall()];
-const mangaProviders: Record<string, MangaProvider> = MANGA_PROVIDERS.reduce(
-    (acc, provider) => {
-        acc[provider.id] = provider;
-        return acc;
+    async () => {
+        const { default: MangaDexBase } = await import("./impl/base/impl/mangadex");
+        return new MangaDexBase();
     },
-    {} as Record<string, MangaProvider>,
-);
-
-const INFORMATION_PROVIDERS: InformationProvider<Anime | Manga, AnimeInfo | MangaInfo>[] = [new AniList(), new Kitsu(), new MAL(), new AniDB(), new TVDB(), new TMDB(), new ComicKInfo(), new MangaDexInfo(), new NovelUpdatesInfo()];
-const infoProviders: Record<string, InformationProvider<Anime | Manga, AnimeInfo | MangaInfo>> = INFORMATION_PROVIDERS.reduce(
-    (acc, provider) => {
-        acc[provider.id] = provider;
-        return acc;
+    async () => {
+        const { default: NovelUpdatesBase } = await import("./impl/base/impl/novelupdates");
+        return new NovelUpdatesBase();
     },
-    {} as Record<string, InformationProvider<Anime | Manga, AnimeInfo | MangaInfo>>,
-);
+];
 
-const META_PROVIDERS: MetaProvider[] = [new TheTVDB(), new AniListMeta(), new MALMeta(), new KitsuMeta(), new TheMovieDB(), new AniDBMeta()];
-const metaProviders: Record<string, MetaProvider> = META_PROVIDERS.reduce(
-    (acc, provider) => {
-        acc[provider.id] = provider;
-        return acc;
+export const ANIME_PROVIDERS = [
+    async () => {
+        const { default: AnimePahe } = await import("./impl/anime/impl/animepahe");
+        return new AnimePahe();
     },
-    {} as Record<string, MetaProvider>,
-);
-
-const BASE_PROVIDERS: BaseProvider[] = [new AniListBase(), new ManagDexBase(), new NovelUpdatesBase()];
-const baseProviders: Record<string, BaseProvider> = BASE_PROVIDERS.reduce(
-    (acc, provider) => {
-        acc[provider.id] = provider;
-        return acc;
+    async () => {
+        const { default: GogoAnime } = await import("./impl/anime/impl/gogoanime");
+        return new GogoAnime();
     },
-    {} as Record<string, BaseProvider>,
-);
+    async () => {
+        const { default: Sudatchi } = await import("./impl/anime/impl/sudatchi");
+        return new Sudatchi();
+    },
+    async () => {
+        const { default: HiAnime } = await import("./impl/anime/impl/hianime");
+        return new HiAnime();
+    },
+];
 
-export { ANIME_PROVIDERS, animeProviders, MANGA_PROVIDERS, mangaProviders, INFORMATION_PROVIDERS, infoProviders, META_PROVIDERS, metaProviders, BASE_PROVIDERS, baseProviders };
+export const MANGA_PROVIDERS = [
+    async () => {
+        const { default: MangaDex } = await import("./impl/manga/impl/mangadex");
+        return new MangaDex();
+    },
+    async () => {
+        const { default: FirstKissNovel } = await import("./impl/manga/impl/1stkissnovel");
+        return new FirstKissNovel();
+    },
+];
+
+export const INFORMATION_PROVIDERS = [
+    async () => {
+        const { default: AniList } = await import("./impl/information/impl/anilist");
+        return new AniList();
+    },
+    async () => {
+        const { default: AniDB } = await import("./impl/information/impl/anidb");
+        return new AniDB();
+    },
+    async () => {
+        const { default: ComicKInfo } = await import("./impl/information/impl/comick");
+        return new ComicKInfo();
+    },
+    async () => {
+        const { default: KitsuInformation } = await import("./impl/information/impl/kitsu");
+        return new KitsuInformation();
+    },
+    async () => {
+        const { default: MALInformation } = await import("./impl/information/impl/mal");
+        return new MALInformation();
+    },
+    async () => {
+        const { default: MangaDexInformation } = await import("./impl/information/impl/mangadex");
+        return new MangaDexInformation();
+    },
+    async () => {
+        const { default: NovelUpdatesInformation } = await import("./impl/information/impl/novelupdates");
+        return new NovelUpdatesInformation();
+    },
+    async () => {
+        const { default: TMDBInformation } = await import("./impl/information/impl/tmdb");
+        return new TMDBInformation();
+    },
+    async () => {
+        const { default: TVDBInformation } = await import("./impl/information/impl/tvdb");
+        return new TVDBInformation();
+    },
+];
+
+export const META_PROVIDERS = [
+    async () => {
+        const { default: AniListMeta } = await import("./impl/meta/impl/anilist");
+        return new AniListMeta();
+    },
+    async () => {
+        const { default: AniDBMeta } = await import("./impl/meta/impl/anidb");
+        return new AniDBMeta();
+    },
+];
+
+export const PROVIDERS = Promise.all([...BASE_PROVIDERS.map((provider) => provider()), ...ANIME_PROVIDERS.map((provider) => provider()), ...MANGA_PROVIDERS.map((provider) => provider()), ...INFORMATION_PROVIDERS.map((provider) => provider()), ...META_PROVIDERS.map((provider) => provider())]);

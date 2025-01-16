@@ -1,0 +1,36 @@
+import type { IColumnDefinition } from "../../../../types/impl/database";
+
+const animeSchema = [
+    { name: "id", type: "TEXT", primaryKey: true, defaultValue: "gen_random_uuid()" },
+    { name: "slug", type: "TEXT" },
+    { name: "coverImage", type: "TEXT" },
+    { name: "bannerImage", type: "TEXT" },
+    { name: "trailer", type: "TEXT" },
+    { name: "status", type: "VARCHAR", nullable: true },
+    { name: "season", type: "VARCHAR", defaultValue: "UNKNOWN" },
+    { name: "title", type: "JSONB" },
+    { name: "currentEpisode", type: "REAL", nullable: true },
+    { name: "mappings", type: "JSONB", defaultValue: "'[]'::JSONB" },
+    { name: "synonyms", type: "TEXT[]", defaultValue: "'{}'::TEXT[]" },
+    { name: "countryOfOrigin", type: "TEXT" },
+    { name: "description", type: "TEXT" },
+    { name: "duration", type: "REAL", nullable: true },
+    { name: "color", type: "TEXT", nullable: true },
+    { name: "year", type: "INT" },
+    { name: "rating", type: "JSONB", nullable: true },
+    { name: "popularity", type: "JSONB", nullable: true },
+    { name: "type", type: "TEXT" },
+    { name: "format", type: "VARCHAR", defaultValue: "UNKNOWN" },
+    { name: "relations", type: "JSONB[]", defaultValue: "'{}'::JSONB[]" },
+    { name: "totalEpisodes", type: "REAL" },
+    { name: "genres", type: "TEXT[]", defaultValue: "'{}'::TEXT[]" },
+    { name: "tags", type: "TEXT[]", defaultValue: "'{}'::TEXT[]" },
+    { name: "episodes", type: "JSONB", defaultValue: `'{"latest": {"updatedAt": 0, "latestEpisode": 0, "latestTitle": ""}, "data": []}'::JSONB` },
+    { name: "averageRating", type: "REAL" },
+    { name: "averagePopularity", type: "REAL" },
+    { name: "artwork", type: "JSONB[]", defaultValue: "ARRAY[]::JSONB[]" },
+    { name: "characters", type: "JSONB[]", defaultValue: "ARRAY[]::JSONB[]" },
+    { name: "createdAt", type: "TIMESTAMP", defaultValue: "NOW()" },
+] as IColumnDefinition[];
+
+export default animeSchema;

@@ -1,10 +1,12 @@
 /**
- * @description Handles the scraping of CORS proxies.
+ * @fileoverview Proxies configuration. Used for fetching CORS proxies to avoid rate limits and IP bans.
  */
 
-// List of CORS proxies
-export const BASE_PROXIES: { providerId: string; ip: string }[] = [];
-export const ANIME_PROXIES: { providerId: string; ip: string }[] = [];
-export const MANGA_PROXIES: { providerId: string; ip: string }[] = [];
-export const META_PROXIES: { providerId: string; ip: string }[] = [];
-export const toCheck: string[] = [];
+/**
+ * @description Target body hash for all public CORS proxies.
+ */
+export const TARGET_HASH = "c7d96235df80ea051e9d57f3ab6d3e4da289fd3b";
+/**
+ * @description Maximum timeout length for a proxy before it is considered dead.
+ */
+export const TIMEOUT_MS = 5000;
