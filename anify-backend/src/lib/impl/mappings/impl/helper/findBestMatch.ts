@@ -1,3 +1,7 @@
+/**
+ * @author Most of this is credited to shimizu.dev_ from the Anify Discord
+ */
+
 import type { IProviderResult } from "../../../../../types";
 import type { IMatchResult } from "../../../../../types/impl/lib/impl/mappings";
 import type { AnimeInfo, MangaInfo } from "../../../../../types/impl/mappings/impl/mediaInfo";

@@ -45,6 +45,10 @@ export const MANGA_PROVIDERS = [
         const { default: ComicK } = await import("./impl/manga/impl/comick");
         return new ComicK();
     },
+    async () => {
+        const { default: JNovels } = await import("./impl/manga/impl/jnovels");
+        return new JNovels();
+    },
 ];
 
 export const INFORMATION_PROVIDERS = [
