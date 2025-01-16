@@ -49,6 +49,10 @@ export const MANGA_PROVIDERS = [
         const { default: JNovels } = await import("./impl/manga/impl/jnovels");
         return new JNovels();
     },
+    async () => {
+        const { default: MangaFire } = await import("./impl/manga/impl/mangafire");
+        return new MangaFire();
+    },
 ];
 
 export const INFORMATION_PROVIDERS = [
