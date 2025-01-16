@@ -41,6 +41,10 @@ export const MANGA_PROVIDERS = [
         const { default: FirstKissNovel } = await import("./impl/manga/impl/1stkissnovel");
         return new FirstKissNovel();
     },
+    async () => {
+        const { default: ComicK } = await import("./impl/manga/impl/comick");
+        return new ComicK();
+    },
 ];
 
 export const INFORMATION_PROVIDERS = [

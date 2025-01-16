@@ -229,10 +229,6 @@ export default class MangaDex extends MangaProvider {
             return false;
         }
     }
-
-    public padNum(num: string | number, places: number): string {
-        return String(num).padStart(places, "0");
-    }
 }
 
 interface IManga {
