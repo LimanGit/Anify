@@ -1,11 +1,11 @@
-import BaseExtractor from "../../types/impl/extractors/impl/baseExtractor";
+import BaseVideoExtractor from "../../types/impl/extractors/impl/baseVideoExtractor";
 import { StreamingServers, type ISource } from "../../types/impl/mappings/impl/anime";
 import { extractSource } from "..";
 
 /**
  * @description Same as Gogo.
  */
-export class VidStreaming extends BaseExtractor {
+export class VidStreaming extends BaseVideoExtractor {
     protected server: StreamingServers = StreamingServers.VidStreaming;
 
     public async extract(url: string): Promise<ISource> {

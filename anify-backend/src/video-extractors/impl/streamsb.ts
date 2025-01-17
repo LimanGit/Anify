@@ -1,7 +1,7 @@
-import BaseExtractor from "../../types/impl/extractors/impl/baseExtractor";
+import BaseVideoExtractor from "../../types/impl/extractors/impl/baseVideoExtractor";
 import { StreamingServers, type ISource } from "../../types/impl/mappings/impl/anime";
 
-export class StreamSB extends BaseExtractor {
+export class StreamSB extends BaseVideoExtractor {
     protected server: StreamingServers = StreamingServers.StreamSB;
 
     public async extract(): Promise<ISource> {

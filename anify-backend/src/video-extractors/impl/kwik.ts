@@ -1,8 +1,8 @@
 import { load } from "cheerio";
-import BaseExtractor from "../../types/impl/extractors/impl/baseExtractor";
+import BaseVideoExtractor from "../../types/impl/extractors/impl/baseVideoExtractor";
 import { StreamingServers, type ISource } from "../../types/impl/mappings/impl/anime";
 
-export class Kwik extends BaseExtractor {
+export class Kwik extends BaseVideoExtractor {
     protected server: StreamingServers = StreamingServers.Kwik;
 
     public async extract(url: string): Promise<ISource> {

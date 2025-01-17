@@ -1,4 +1,4 @@
-import type { IExtractor } from "../types/impl/extractors";
+import type { IVideoExtractor } from "../types/impl/extractors";
 import { type ISource, StreamingServers } from "../types/impl/mappings/impl/anime";
 import { GogoCDN } from "./impl/gogocdn";
 import { VidStreaming } from "./impl/vidstreaming";
@@ -6,7 +6,7 @@ import { Kwik } from "./impl/kwik";
 import { StreamSB } from "./impl/streamsb";
 import { VidCloud } from "./impl/vidcloud";
 
-const EXTRACTOR_MAP: Record<StreamingServers, IExtractor> = {
+const VIDEO_EXTRACTOR_MAP: Record<StreamingServers, IVideoExtractor> = {
     [StreamingServers.GogoCDN]: new GogoCDN(),
     [StreamingServers.VidStreaming]: new VidStreaming(),
     [StreamingServers.Kwik]: new Kwik(),
@@ -21,7 +21,7 @@ const EXTRACTOR_MAP: Record<StreamingServers, IExtractor> = {
  * @param server  The enum representing which server to use
  */
 export async function extractSource(url: string, server: StreamingServers): Promise<ISource | undefined> {
-    const extractor = EXTRACTOR_MAP[server];
+    const extractor = VIDEO_EXTRACTOR_MAP[server];
     if (!extractor) {
         console.warn(`[ExtractorService] No extractor found for server: ${server}`);
         return undefined;

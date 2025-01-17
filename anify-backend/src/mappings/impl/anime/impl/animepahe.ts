@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import AnimeProvider from "..";
 import { type IEpisode, type IProviderResult, MediaFormat } from "../../../../types";
 import { ISource, StreamingServers, SubType } from "../../../../types/impl/mappings/impl/anime";
-import { extractSource } from "../../../../extractors";
+import { extractSource } from "../../../../video-extractors";
 
 /**
  * @description: For some reason, proxy scraping doesn't work with AnimePahe. I got it working with some proxies stolen from baseProxies.json, but obviously those aren't tested with AnimePahe specifically. TLDR, someone please fix proxy scraping for AnimePahe then it should work. 3/15/2024

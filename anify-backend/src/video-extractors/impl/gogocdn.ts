@@ -1,9 +1,9 @@
 import { load } from "cheerio";
-import BaseExtractor from "../../types/impl/extractors/impl/baseExtractor";
+import BaseVideoExtractor from "../../types/impl/extractors/impl/baseVideoExtractor";
 import { StreamingServers, type ISource } from "../../types/impl/mappings/impl/anime";
 import CryptoJS from "crypto-js";
 
-export class GogoCDN extends BaseExtractor {
+export class GogoCDN extends BaseVideoExtractor {
     protected server: StreamingServers = StreamingServers.GogoCDN;
 
     public async extract(url: string): Promise<ISource> {

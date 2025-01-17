@@ -65,6 +65,10 @@ export const MANGA_PROVIDERS = [
         const { default: MangaSee } = await import("./impl/manga/impl/mangasee");
         return new MangaSee();
     },
+    async () => {
+        const { default: NovelUpdates } = await import("./impl/manga/impl/novelupdates");
+        return new NovelUpdates();
+    },
 ];
 
 export const INFORMATION_PROVIDERS = [

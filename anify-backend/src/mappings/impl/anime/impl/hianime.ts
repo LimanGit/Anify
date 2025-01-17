@@ -2,7 +2,7 @@ import AnimeProvider from "..";
 import { type ISource, StreamingServers, SubType } from "../../../../types/impl/mappings/impl/anime";
 import { type IEpisode, type IProviderResult, MediaFormat } from "../../../../types";
 import { type CheerioAPI, load } from "cheerio";
-import { extractSource } from "../../../../extractors";
+import { extractSource } from "../../../../video-extractors";
 
 export default class HiAnime extends AnimeProvider {
     override rateLimit = 0;

@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import AnimeProvider from "..";
 import { type ISource, StreamingServers, SubType } from "../../../../types/impl/mappings/impl/anime";
 import { type IEpisode, type IProviderResult, MediaFormat } from "../../../../types";
-import { extractSource } from "../../../../extractors";
+import { extractSource } from "../../../../video-extractors";
 
 export default class GogoAnime extends AnimeProvider {
     override rateLimit = 0;
