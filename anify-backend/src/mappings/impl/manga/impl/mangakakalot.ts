@@ -37,7 +37,10 @@ export default class Mangakakalot extends MangaProvider {
 
                 const altTitles: string[] =
                     url === this.secondURL
-                        ? $$("div.story-info-right > table > tbody > tr:nth-child(1) > td.table-value > h2").text().split(";")
+                        ? $$("div.story-info-right > table > tbody > tr:nth-child(1) > td.table-value > h2")
+                              .text()
+                              .split(";")
+                              .map((x) => x.trim())
                         : $$("div.manga-info-top > ul > li:nth-child(1) > h2")
                               .text()
                               .replace("Alternative :", "")

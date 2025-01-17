@@ -57,6 +57,10 @@ export const MANGA_PROVIDERS = [
         const { default: Mangakakalot } = await import("./impl/manga/impl/mangakakalot");
         return new Mangakakalot();
     },
+    async () => {
+        const { default: MangaPill } = await import("./impl/manga/impl/mangapill");
+        return new MangaPill();
+    },
 ];
 
 export const INFORMATION_PROVIDERS = [
