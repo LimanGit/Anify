@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import MangaProvider from "..";
 import { type IChapter, type IProviderResult, MediaFormat } from "../../../../types";
 import type { IPage } from "../../../../types/impl/mappings/impl/manga";
-import { compareTwoStrings } from "../../../../helper/impl/stringSimilarity";
+import { compareTwoStrings } from "../../../../helper/impl/string";
 
 export default class JNovels extends MangaProvider {
     override rateLimit = 0;

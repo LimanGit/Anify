@@ -111,6 +111,11 @@ export default class MangaFire extends MangaProvider {
             })
         ).json()) as { status: number; result: { html: string }; message: string; messages: string[] };
 
+        if (data.status !== 200) {
+            // Sometimes it returns 404 with "Resource not found".
+            return undefined;
+        }
+
         const $ = load(data.result?.html);
 
         let chapterId = "";
@@ -268,7 +273,6 @@ export default class MangaFire extends MangaProvider {
 interface IImageResponse {
     status: number;
     result: {
-        force_reading_mode: any;
         images: [[string, number, number]];
     };
     message: string;

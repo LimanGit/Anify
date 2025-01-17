@@ -1,15 +1,15 @@
 import { expect, test } from "bun:test";
 import { env } from "../../../../env";
 import { preloadProxies } from "../../../../proxies/impl/manager/impl/file/preloadProxies";
-import MangaPill from "../../../../mappings/impl/manga/impl/mangapill";
+import MangaSee from "../../../../mappings/impl/manga/impl/mangasee";
 
-const mangapill = new MangaPill();
+const mangasee = new MangaSee();
 
 test(
-    "Manga.Mangapill.Search",
+    "Manga.MangaSee.Search",
     async (done) => {
         await preloadProxies();
-        const data = await mangapill.search("Mushoku Tensei");
+        const data = await mangasee.search("Mushoku Tensei");
 
         expect(data).toBeDefined();
         expect(data).not.toBeEmpty();
@@ -26,11 +26,11 @@ test(
 );
 
 test(
-    "Manga.MangaPill.Chapters",
+    "Manga.MangaSee.Chapters",
     async (done) => {
         await preloadProxies();
-        const resp = await mangapill.search("Mushoku Tensei");
-        const data = await mangapill.fetchChapters(resp?.[0].id ?? "");
+        const resp = await mangasee.search("Mushoku Tensei");
+        const data = await mangasee.fetchChapters(resp?.[0].id ?? "");
 
         expect(data).toBeDefined();
         expect(data).not.toBeEmpty();
@@ -47,12 +47,12 @@ test(
 );
 
 test(
-    "Manga.MangaPill.Pages",
+    "Manga.MangaSee.Pages",
     async (done) => {
         await preloadProxies();
-        const resp = await mangapill.search("Mushoku Tensei");
-        const data1 = await mangapill.fetchChapters(resp?.[0].id ?? "");
-        const data = await mangapill.fetchPages(data1?.[0].id ?? "");
+        const resp = await mangasee.search("Mushoku Tensei");
+        const data1 = await mangasee.fetchChapters(resp?.[0].id ?? "");
+        const data = await mangasee.fetchPages(data1?.[0].id ?? "");
 
         expect(data).toBeDefined();
         expect(data).not.toBeEmpty();

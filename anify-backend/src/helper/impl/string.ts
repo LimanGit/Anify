@@ -1,5 +1,6 @@
 /**
- * @fileoverview Used for string similarity comparison. Mainly for mapping purposes. Most of this was taken from the string-similarity package.
+ * @fileoverview Used for string similarity comparison and string searching. Mainly for mapping purposes.
+ * Most of this was taken from the string-similarity package.
  */
 
 import { cleanTitle, sanitizeTitle } from "../../lib/impl/mappings/impl/helper/helper";
@@ -144,6 +145,7 @@ export function findBestMatch2DArray(mainStrings: string[], targetStrings: strin
 
     return overallBestMatch;
 }
+
 function areArgsValid(mainString: string, targetStrings: string[]): boolean {
     if (typeof mainString !== "string") return false;
     if (!Array.isArray(targetStrings)) return false;
@@ -155,4 +157,20 @@ function areArgsValid(mainString: string, targetStrings: string[]): boolean {
     )
         return false;
     return true;
+}
+
+export function stringSearch(string: string, pattern: string): number {
+    let count = 0;
+    string = string.toLowerCase();
+    pattern = pattern.toLowerCase();
+    string = string.replace(/[^a-zA-Z0-9 -]/g, "");
+    pattern = pattern.replace(/[^a-zA-Z0-9 -]/g, "");
+
+    for (let i = 0; i < string.length; i++) {
+        for (let j = 0; j < pattern.length; j++) {
+            if (pattern[j] !== string[i + j]) break;
+            if (j === pattern.length - 1) count++;
+        }
+    }
+    return count;
 }
