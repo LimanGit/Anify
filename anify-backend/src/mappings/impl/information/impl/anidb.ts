@@ -75,7 +75,7 @@ export default class AniDB extends InformationProvider<IAnime | IManga, AnimeInf
         const totalEpisodes = isNaN(Number($("div.info tr.type td.value span").html())) ? null : Number($("div.info tr.type td.value span").html());
 
         const runningTimeText = $("div.stats div.container div.duration div.val").text().trim();
-        const runningTime = runningTimeText.includes("h") ? Number(runningTimeText.split(" ")[1].slice(0, -1)) * 60 : Number(runningTimeText.split(" ")[1].slice(0, -1));
+        const runningTime = runningTimeText.includes("h") ? Number(runningTimeText.split(" ")[1]?.slice(0, -1)) * 60 : Number(runningTimeText.split(" ")[1]?.slice(0, -1));
 
         const duration = totalEpisodes ? runningTime / totalEpisodes : null;
 

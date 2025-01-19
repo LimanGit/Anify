@@ -40,6 +40,11 @@ export default class DatabaseHandler {
     private preparedStatements: Map<string, { text: string; values: any[] }> = new Map();
 
     /**
+     * @description Whether the database is connected.
+     */
+    private isConnected: boolean = false;
+
+    /**
      * @constructor Creates a new DatabaseHandler instance.
      *
      * @param config PostgreSQL client configuration.
@@ -74,18 +79,33 @@ export default class DatabaseHandler {
      * @method connect Connects to the PostgreSQL database.
      */
     public async connect(): Promise<void> {
-        await this.client.connect();
-        await this.ensureExtensionsAndFunctions();
-        await this.prepareCommonStatements();
-        await emitter.emitAsync(Events.DATABASE_CONNECTED);
+        if (this.isConnected) {
+            return;
+        }
+
+        try {
+            await this.client.connect();
+            await this.ensureExtensionsAndFunctions();
+            await this.prepareCommonStatements();
+            this.isConnected = true;
+            await emitter.emitAsync(Events.DATABASE_CONNECTED);
+        } catch (error) {
+            this.isConnected = false;
+            throw error;
+        }
     }
 
     /**
      * @method disconnect Disconnects from the PostgreSQL database.
      */
     public async disconnect(): Promise<void> {
+        if (!this.isConnected) {
+            return;
+        }
+
         await this.client.end();
         await this.pool.end();
+        this.isConnected = false;
         await emitter.emitAsync(Events.DATABASE_DISCONNECTED);
     }
 

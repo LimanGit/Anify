@@ -3,13 +3,14 @@ import { type IChapter, type IProviderResult, MediaFormat } from "../../../../ty
 import type { IPage } from "../../../../types/impl/mappings/impl/manga";
 
 export default class MangaDex extends MangaProvider {
-    override rateLimit = 0;
-    override maxConcurrentRequests: number = -1;
     override id = "mangadex";
     override url = "https://mangadex.org";
 
     public needsProxy: boolean = true;
-    public useGoogleTranslate: boolean = true;
+    public useGoogleTranslate: boolean = false;
+
+    override rateLimit = 0;
+    override maxConcurrentRequests: number = -1;
 
     override formats: MediaFormat[] = [MediaFormat.MANGA, MediaFormat.ONE_SHOT];
 
@@ -17,23 +18,19 @@ export default class MangaDex extends MangaProvider {
 
     override async search(query: string): Promise<IProviderResult[] | undefined> {
         const results: IProviderResult[] = [];
+        const limit = 25;
 
-        let mangaList: IManga[] = [];
+        // Build URL with all params at once
+        const uri = new URL("/manga", this.api);
+        uri.searchParams.set("title", query);
+        uri.searchParams.set("limit", String(limit * 2)); // Get 2 pages worth in one request
+        uri.searchParams.set("offset", "0");
+        uri.searchParams.set("order[relevance]", "desc");
+        uri.searchParams.append("contentRating[]", "safe");
+        uri.searchParams.append("contentRating[]", "suggestive");
+        uri.searchParams.append("includes[]", "cover_art");
 
-        for (let page = 0; page <= 1; page += 1) {
-            const uri = new URL("/manga", this.api);
-            uri.searchParams.set("title", query);
-            uri.searchParams.set("limit", "25");
-            uri.searchParams.set("offset", String(25 * page).toString());
-            uri.searchParams.set("order[relevance]", "desc");
-            uri.searchParams.append("contentRating[]", "safe");
-            uri.searchParams.append("contentRating[]", "suggestive");
-            uri.searchParams.append("includes[]", "cover_art");
-
-            const data = (await (await this.request(uri.href)).json()) as { data: IManga[] };
-
-            mangaList = [...mangaList, ...data.data];
-        }
+        const { data: mangaList = [] } = (await (await this.request(uri.href)).json()) as { data: IManga[] };
 
         for (const manga of mangaList) {
             const { attributes, relationships, id, type: mangaType } = manga;
@@ -43,14 +40,14 @@ export default class MangaDex extends MangaProvider {
             const coverArtId = relationships.find((element) => element.type === "cover_art")?.id;
             const img = coverArtId ? `${this.url}/covers/${id}/${coverArtId}.jpg.512.jpg` : null;
 
-            // Process format once
-            const formatString = mangaType.toUpperCase();
-            const format = formatString === "ADAPTATION" ? MediaFormat.MANGA : Object.values(MediaFormat).includes(formatString as MediaFormat) ? (formatString as MediaFormat) : MediaFormat.MANGA;
-
             // Process titles once
             const titleEnglish = altTitles.find((t) => Object.keys(t)[0] === "en")?.en ?? title[Object.keys(title).find((v) => v === "en") ?? ""] ?? null;
             const titleRomaji = title["ja-ro"] ?? title["jp-ro"] ?? altTitles.find((t) => Object.keys(t)[0] === "ja-ro")?.["ja-ro"] ?? altTitles.find((t) => Object.keys(t)[0] === "jp-ro")?.["jp-ro"] ?? null;
             const titleNative = title["jp"] ?? title["ja"] ?? title["ko"] ?? altTitles.find((t) => Object.keys(t)[0] === "jp")?.jp ?? altTitles.find((t) => Object.keys(t)[0] === "ja")?.ja ?? altTitles.find((t) => Object.keys(t)[0] === "ko")?.ko ?? null;
+
+            // Process format once
+            const formatString = mangaType.toUpperCase();
+            const format = formatString === "ADAPTATION" ? MediaFormat.MANGA : Object.values(MediaFormat).includes(formatString as MediaFormat) ? (formatString as MediaFormat) : MediaFormat.MANGA;
 
             results.push({
                 id,
@@ -62,6 +59,7 @@ export default class MangaDex extends MangaProvider {
                 providerId: this.id,
             });
         }
+
         return results;
     }
 
@@ -174,57 +172,22 @@ export default class MangaDex extends MangaProvider {
 
     override async proxyCheck(proxyURL: string): Promise<boolean | undefined> {
         try {
-            const results: IProviderResult[] = [];
+            const uri = new URL("/manga", this.api);
+            uri.searchParams.set("title", "Mushoku Tensei");
+            uri.searchParams.set("limit", "25");
+            uri.searchParams.set("offset", "0");
+            uri.searchParams.set("order[relevance]", "desc");
+            uri.searchParams.append("contentRating[]", "safe");
+            uri.searchParams.append("contentRating[]", "suggestive");
+            uri.searchParams.append("includes[]", "cover_art");
 
-            let mangaList: IManga[] = [];
+            const { data: mangaList = [] } = (await (
+                await this.request(uri.href, {
+                    proxy: proxyURL,
+                })
+            ).json()) as { data: IManga[] };
 
-            for (let page = 0; page <= 1; page += 1) {
-                const uri = new URL("/manga", this.api);
-                uri.searchParams.set("title", "Mushoku Tensei");
-                uri.searchParams.set("limit", "25");
-                uri.searchParams.set("offset", String(25 * page).toString());
-                uri.searchParams.set("order[relevance]", "desc");
-                uri.searchParams.append("contentRating[]", "safe");
-                uri.searchParams.append("contentRating[]", "suggestive");
-                uri.searchParams.append("includes[]", "cover_art");
-
-                const data = (await (
-                    await this.request(uri.href, {
-                        proxy: proxyURL,
-                    })
-                ).json()) as { data: IManga[] };
-
-                mangaList = [...mangaList, ...data.data];
-            }
-
-            for (const manga of mangaList) {
-                const { attributes, relationships, id, type: mangaType } = manga;
-                const { title, altTitles, year } = attributes;
-
-                // Find cover art relationship once
-                const coverArtId = relationships.find((element) => element.type === "cover_art")?.id;
-                const img = coverArtId ? `${this.url}/covers/${id}/${coverArtId}.jpg.512.jpg` : null;
-
-                // Process format once
-                const formatString = mangaType.toUpperCase();
-                const format = formatString === "ADAPTATION" ? MediaFormat.MANGA : Object.values(MediaFormat).includes(formatString as MediaFormat) ? (formatString as MediaFormat) : MediaFormat.MANGA;
-
-                // Process titles once
-                const titleEnglish = altTitles.find((t) => Object.keys(t)[0] === "en")?.en ?? title[Object.keys(title).find((v) => v === "en") ?? ""] ?? null;
-                const titleRomaji = title["ja-ro"] ?? title["jp-ro"] ?? altTitles.find((t) => Object.keys(t)[0] === "ja-ro")?.["ja-ro"] ?? altTitles.find((t) => Object.keys(t)[0] === "jp-ro")?.["jp-ro"] ?? null;
-                const titleNative = title["jp"] ?? title["ja"] ?? title["ko"] ?? altTitles.find((t) => Object.keys(t)[0] === "jp")?.jp ?? altTitles.find((t) => Object.keys(t)[0] === "ja")?.ja ?? altTitles.find((t) => Object.keys(t)[0] === "ko")?.ko ?? null;
-
-                results.push({
-                    id,
-                    title: titleEnglish ?? titleRomaji ?? titleNative ?? null,
-                    altTitles: [...altTitles.map((title) => Object.values(title)[0]), ...Object.values(title)],
-                    img,
-                    format,
-                    year,
-                    providerId: this.id,
-                });
-            }
-            return results.length > 0;
+            return mangaList.length > 0;
         } catch {
             return false;
         }
