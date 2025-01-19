@@ -8,7 +8,7 @@ export default class GogoAnime extends AnimeProvider {
     override rateLimit = 0;
     override maxConcurrentRequests: number = -1;
     override id = "gogoanime";
-    override url = "https://anitaku.io";
+    override url = "https://anitaku.bz";
 
     public needsProxy: boolean = false;
     public useGoogleTranslate: boolean = false;

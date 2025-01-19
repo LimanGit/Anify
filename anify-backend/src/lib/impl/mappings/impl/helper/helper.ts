@@ -49,7 +49,7 @@ export function sanitizeTitle(title?: string): string | undefined {
         .replace(/ouh/g, "oh")
         .replace(/yaa/g, "ya")
         // Remove specific words related to anime formats or additional information
-        .replace(/\b(?:uncut|uncensored|dub(?:bed)?|censored|sub(?:bed)?|the final chapters)\b|\([^)]*\)|\bBD\b|\(TV\)/gi, "");
+        .replace(/\b(?:uncut|uncensored|dub(?:bed)?|censored|sub(?:bed)?|the final chapters)\b|\([^)]*\)|\bd\b|\(tv\)/gi, "");
 
     // Normalize the string to remove accents and other diacritical marks, and then remove diacritical marks
     sanitized = sanitized.normalize("NFD").replace(/\p{M}/gu, "");

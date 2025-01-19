@@ -4,6 +4,7 @@ import { type IChapter, type IProviderResult, MediaFormat } from "../../../../ty
 import { NovelProviders, type IPage } from "../../../../types/impl/mappings/impl/manga";
 import { env } from "../../../../env";
 import { NOVEL_EXTRACTOR_MAP, extractNovel } from "../../../../novel-extractors";
+import { extract } from "@extractus/article-extractor";
 
 export default class NovelUpdates extends MangaProvider {
     override rateLimit: number = 100; // Needs a high rate limit cause bruh
@@ -93,20 +94,38 @@ export default class NovelUpdates extends MangaProvider {
         return results;
     }
 
-    override async fetchChapters(id: string, retries = 0): Promise<IChapter[] | undefined> {
-        if (retries >= 5) return undefined;
+    override async fetchChapters(id: string): Promise<IChapter[] | undefined> {
+        // First, get the first page to determine total number of pages
+        const firstPageData = await (
+            await this.request(
+                `${this.url}/series/${id}/?pg=1#myTable`,
+                {
+                    headers: {
+                        Cookie: env.NOVELUPDATES_LOGIN ?? "",
+                        "User-Agent": "Mozilla/5.0",
+                    },
+                },
+                false,
+            )
+        ).text();
 
-        const chapters: IChapter[] = [];
+        const firstPage$ = load(firstPageData);
 
-        // Might need to test if there are links or not. If the cookie is expired, then there won't be any links.
-        // NovelUpdates recently changed things and server-renders all their chapter links.
-        let hasNextPage = true;
+        // Check if there are any chapters
+        const chaptersTable = firstPage$("div.l-submain table#myTable");
+        if (!chaptersTable.length) {
+            return [];
+        }
 
-        for (let i = 1; hasNextPage; i++) {
-            this.useGoogleTranslate = false;
+        // Find the last page number from pagination
+        const lastPageLink = firstPage$("div.digg_pagination a").last();
+        const totalPages = lastPageLink.length ? parseInt(lastPageLink.attr("href")?.split("pg=")[1] ?? "1") : 1;
+
+        // Create array of page numbers to fetch
+        const pagePromises = Array.from({ length: totalPages }, (_, i) => i + 1).map(async (pageNum) => {
             const data = await (
                 await this.request(
-                    `${this.url}/series/${id}/?pg=${i}#myTable`,
+                    `${this.url}/series/${id}/?pg=${pageNum}#myTable`,
                     {
                         headers: {
                             Cookie: env.NOVELUPDATES_LOGIN ?? "",
@@ -115,154 +134,44 @@ export default class NovelUpdates extends MangaProvider {
                     },
                     false,
                 )
-            ).text(); // might need to change to true
-            this.useGoogleTranslate = true;
+            ).text();
 
             const $ = load(data);
+            const pageChapters: IChapter[] = [];
 
-            if ($("div.l-submain table#myTable tr").length < 1 || !$("div.l-submain table#myTable tr")) {
-                hasNextPage = false;
-                break;
-            } else {
-                for (let l = 0; l < $("div.l-submain table#myTable tr").length; l++) {
-                    const title = $("div.l-submain table#myTable tr").eq(l).find("td a.chp-release").attr("title");
-                    const id = $("div.l-submain table#myTable tr").eq(l).find("td a.chp-release").attr("href")?.split("/extnu/")[1].split("/")[0];
+            $("div.l-submain table#myTable tr").each((idx, el) => {
+                const title = $(el).find("td a.chp-release").attr("title");
+                const chapterId = $(el).find("td a.chp-release").attr("href")?.split("/extnu/")[1].split("/")[0];
 
-                    if (!title || !id) continue;
+                if (!title || !chapterId) return;
 
-                    if ((chapters.length > 0 && chapters[chapters.length - 1].id === id) || chapters.find((c) => c.id === id)) {
-                        hasNextPage = false;
-                        break;
-                    }
-
-                    chapters.push({
-                        id: id!,
-                        title: title!,
-                        number: l,
-                        rating: null,
-                        updatedAt: new Date($("div.l-submain table#myTable tr").eq(l).find("td").first().text().trim()).getTime(),
-                    });
-                }
-            }
-        }
-
-        if (chapters.length === 0) {
-            console.log("WARNING: Cookie seems to not work. Trying without cookie.");
-            // More scuffed version that doesn't seem to work anymore. I think NovelUpdates changed things
-            // and now their admin-ajax will return randomized chapters to prevent scrapers. GG
-
-            const $ = load(
-                await (
-                    await this.request(`${this.url}/series/${id}/`, {
-                        headers: {
-                            Referer: this.url,
-                            "User-Agent": "Mozilla/5.0",
-                        },
-                    })
-                ).text(),
-            );
-
-            const postId = $("input#mypostid").attr("value");
-
-            this.useGoogleTranslate = false;
-            const chapterData = (
-                await (
-                    await this.request(`${this.url}/wp-admin/admin-ajax.php`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                            Cookie: env.NOVELUPDATES_LOGIN ?? "",
-                            "User-Agent": "Mozilla/5.0",
-                        },
-                        body: `action=nd_getchapters&mypostid=${postId}&mygrr=0`,
-                    })
-                ).text()
-            ).substring(1);
-
-            this.useGoogleTranslate = true;
-
-            const $$ = load(chapterData);
-
-            if (chapterData.includes("not whitelisted by the operator of this proxy") || $$("title").html() === "Just a moment...") return this.fetchChapters(id, retries + 1);
-
-            const uniqueTitles = new Set<string>();
-            $$("li.sp_li_chp a[data-id]").each((index, el) => {
-                const id = $$(el).attr("data-id");
-                const title = $$(el).find("span").text();
-
-                if (!uniqueTitles.has(title)) {
-                    uniqueTitles.add(title);
-
-                    chapters.push({
-                        id: id!,
-                        title: title!,
-                        number: index + 1,
-                        rating: null,
-                    });
-                }
+                pageChapters.push({
+                    id: chapterId,
+                    title: title,
+                    number: idx, // Just use the index as the number since we'll sort by updatedAt
+                    rating: null,
+                    updatedAt: new Date($(el).find("td").first().text().trim()).getTime(),
+                });
             });
 
-            return chapters.reverse();
-        }
-
-        return chapters.reverse();
-    }
-
-    private async fetchChaptersWithoutCookie(id: string): Promise<IChapter[] | undefined> {
-        console.log("WARNING: Cookie seems to not work. Trying without cookie.");
-        // More scuffed version that doesn't seem to work anymore. I think NovelUpdates changed things
-        // and now their admin-ajax will return randomized chapters to prevent scrapers. GG
-
-        const $ = load(
-            await (
-                await this.request(`${this.url}/series/${id}/`, {
-                    headers: {
-                        Referer: this.url,
-                        "User-Agent": "Mozilla/5.0",
-                    },
-                })
-            ).text(),
-        );
-
-        const postId = $("input#mypostid").attr("value");
-
-        const chapterData = (
-            await (
-                await this.request(`${this.url}/wp-admin/admin-ajax.php`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                        Cookie: env.NOVELUPDATES_LOGIN ?? "",
-                        "User-Agent": "Mozilla/5.0",
-                    },
-                    body: `action=nd_getchapters&mypostid=${postId}&mygrr=0`,
-                })
-            ).text()
-        ).substring(1);
-
-        const $$ = load(chapterData);
-
-        if (chapterData.includes("not whitelisted by the operator of this proxy") || $$("title").html() === "Just a moment...") return undefined;
-
-        const chapters: IChapter[] = [];
-        const uniqueTitles = new Set<string>();
-        $$("li.sp_li_chp a[data-id]").each((index, el) => {
-            const id = $$(el).attr("data-id");
-            const title = $$(el).find("span").text();
-
-            if (!uniqueTitles.has(title)) {
-                uniqueTitles.add(title);
-
-                chapters.push({
-                    id: id!,
-                    title: title!,
-                    number: index + 1,
-                    rating: null,
-                });
-            }
+            return pageChapters;
         });
 
-        return chapters.reverse();
+        // Wait for all pages to be fetched
+        const chaptersByPage = await Promise.all(pagePromises);
+
+        // Flatten and filter out duplicates by ID
+        const chapters = chaptersByPage
+            .flat()
+            .filter((chapter, index, self) => index === self.findIndex((c) => c.id === chapter.id))
+            .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)); // Sort by updatedAt in descending order, fallback to 0 if undefined
+
+        // Reassign numbers based on sorted order
+        chapters.forEach((chapter, idx) => {
+            chapter.number = idx;
+        });
+
+        return chapters;
     }
 
     override async fetchPages(id: string, proxy: boolean = true, chapter: IChapter | null = null): Promise<IPage[] | string | undefined> {
@@ -271,7 +180,7 @@ export default class NovelUpdates extends MangaProvider {
             {
                 method: "GET",
                 headers: {
-                    Cookie: "_ga=;",
+                    Referer: this.url,
                     "User-Agent": "Mozilla/5.0",
                 },
                 redirect: "follow",
@@ -280,16 +189,27 @@ export default class NovelUpdates extends MangaProvider {
         );
 
         if (req.status === 500 || req.statusText === "Timeout" || (req.status === 400 && req.statusText === "Bad Request")) return await this.fetchPages(id, false, chapter);
-
-        const data = await req.text();
-        const $ = load(data);
-        const baseURL = $("base").attr("href")?.replace("http://", "https://") ?? this.url;
+        const baseURL = new URL(req.url).origin;
 
         switch (true) {
             case baseURL.includes("zetrotranslation.com"):
-                return await extractNovel(baseURL, NovelProviders.ZetroTranslations, chapter);
+                return await extractNovel(req.url, NovelProviders.ZetroTranslations, chapter);
             default:
-                return undefined;
+                try {
+                    const article = await extract(
+                        req.url,
+                        {},
+                        {
+                            headers: {
+                                Cookie: "_ga=;",
+                            },
+                        },
+                    );
+                    return article?.content;
+                } catch (e) {
+                    console.error(e);
+                    return "Error extracting chapter content for " + baseURL + ".";
+                }
         }
     }
 
@@ -332,7 +252,6 @@ export default class NovelUpdates extends MangaProvider {
             });
 
             if (results.length > 0) {
-                // Now test all the novel extractors
                 for (const novelExtractor of Object.values(NOVEL_EXTRACTOR_MAP)) {
                     if (novelExtractor.needsProxy) {
                         const test = await fetch(novelExtractor.url);

@@ -52,7 +52,7 @@ test(
         await preloadProxies();
         const resp = await novelupdates.search("Mushoku Tensei");
         const data1 = await novelupdates.fetchChapters(resp?.[0].id ?? "");
-        const data = await novelupdates.fetchPages(data1?.[0].id ?? "");
+        const data = await novelupdates.fetchPages(data1?.[3].id ?? "");
 
         expect(data).toBeDefined();
         expect(data).not.toBeEmpty();

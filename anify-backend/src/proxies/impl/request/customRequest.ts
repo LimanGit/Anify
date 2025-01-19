@@ -14,6 +14,8 @@ export async function customRequest(url: string, options: IRequestConfig = {}): 
 
     while (retryCount < maxRetries) {
         const finalURL = useGoogleTranslate ? "http://translate.google.com/translate?sl=ja&tl=en&u=" + encodeURIComponent(url) : url;
+        const isHttps = finalURL.startsWith("https://");
+
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
 
@@ -26,19 +28,28 @@ export async function customRequest(url: string, options: IRequestConfig = {}): 
             currentOptions.proxy = currentProxy;
 
             if (currentProxy && currentProxy.length > 0) {
-                // Create a new ProxyAgent for each attempt with SSL verification disabled
+                // Create a new ProxyAgent for each attempt with appropriate configuration for HTTP/HTTPS
                 // @ts-expect-error - ProxyAgent is compatible with Dispatcher but types are mismatched
                 currentOptions.dispatcher = new ProxyAgent({
                     uri: currentProxy,
-                    requestTls: {
-                        rejectUnauthorized: false, // This disables SSL certificate verification
-                    },
+                    // Only add TLS options for HTTPS URLs
+                    ...(isHttps
+                        ? {
+                              requestTls: {
+                                  rejectUnauthorized: false,
+                              },
+                          }
+                        : {
+                              // For HTTP URLs, ensure connection is not upgraded to HTTPS
+                              protocol: "http:",
+                          }),
                 });
             }
 
             const fetchPromise = fetch(finalURL, {
                 ...currentOptions,
                 signal: controller.signal,
+                redirect: "manual", // Don't automatically follow redirects
             });
 
             const timeoutPromise = new Promise<never>((_, reject) =>
@@ -50,6 +61,25 @@ export async function customRequest(url: string, options: IRequestConfig = {}): 
 
             const response = await Promise.race([fetchPromise, timeoutPromise]);
             clearTimeout(id);
+
+            // Handle redirects manually
+            if (response.status === 301 || response.status === 302 || response.status === 303 || response.status === 307 || response.status === 308) {
+                const location = response.headers.get("location");
+                if (location) {
+                    // Create new options for the redirect
+                    const redirectOptions = { ...options };
+                    // Copy over headers from the original response that should be preserved
+                    if (response.headers.get("set-cookie")) {
+                        redirectOptions.headers = {
+                            ...redirectOptions.headers,
+                            Cookie: response.headers.get("set-cookie") || "",
+                        };
+                    }
+                    // Make a new request to the redirect location
+                    return customRequest(location, redirectOptions);
+                }
+            }
+
             return response;
         } catch (error) {
             if (options.isChecking) {

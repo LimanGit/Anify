@@ -10,16 +10,16 @@ test(
     async (done) => {
         await initDB();
 
-        await MediaRepository.deleteById(db, MediaType.MANGA, "81fbe9c6-7bd2-40c1-a9ee-e941af5643f4");
+        await MediaRepository.deleteById(db, MediaType.ANIME, "113415");
 
         const mappings = await lib.loadMapping({
-            id: "81fbe9c6-7bd2-40c1-a9ee-e941af5643f4",
-            type: MediaType.MANGA,
-            formats: [MediaFormat.MANGA],
+            id: "113415",
+            type: MediaType.ANIME,
+            formats: [MediaFormat.TV],
         });
 
         if (env.DEBUG) {
-            console.log(mappings);
+            console.log(mappings[0]);
         }
         done();
     },
