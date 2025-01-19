@@ -6,6 +6,7 @@ import { ProviderType } from "../../../types";
 
 export async function customRequest(url: string, options: IRequestConfig = {}): Promise<Response> {
     const { useGoogleTranslate, timeout = 5000, providerType, providerId, maxRetries = 3 } = options;
+
     let currentProxy = options.proxy;
     let retryCount = 0;
     // Keep track of used proxies to avoid reusing them
@@ -49,13 +50,13 @@ export async function customRequest(url: string, options: IRequestConfig = {}): 
             const fetchPromise = fetch(finalURL, {
                 ...currentOptions,
                 signal: controller.signal,
-                redirect: "manual", // Don't automatically follow redirects
+                redirect: useGoogleTranslate ? "follow" : "manual",
             });
 
             const timeoutPromise = new Promise<never>((_, reject) =>
                 setTimeout(() => {
                     controller.abort();
-                    reject(new Error(`Request to ${url}${currentProxy && currentProxy.length > 0 ? ` with proxy ${currentProxy}` : ""} timed out after ${timeout} ms`));
+                    reject(new Error(`Request to ${url}${currentProxy && currentProxy.length > 0 ? ` with proxy ${currentProxy}` : ""}${useGoogleTranslate ? " with Google Translate" : ""} timed out after ${timeout} ms`));
                 }, timeout),
             );
 

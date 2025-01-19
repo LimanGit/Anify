@@ -10,7 +10,7 @@ export default class AniDB extends InformationProvider<IAnime | IManga, AnimeInf
     override id = "anidb";
     override url = "https://anidb.net";
 
-    public needsProxy: boolean = true;
+    public needsProxy: boolean = false;
     public useGoogleTranslate: boolean = false;
 
     override rateLimit: number = 0;
@@ -35,7 +35,8 @@ export default class AniDB extends InformationProvider<IAnime | IManga, AnimeInf
         const data = await (
             await this.request(`${this.url}${aniDbId}`, {
                 headers: {
-                    "User-Agent": "Anify",
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                    Cookie: "adbuin=1234567890-ehCL",
                 },
             })
         ).text();
@@ -132,7 +133,8 @@ export default class AniDB extends InformationProvider<IAnime | IManga, AnimeInf
         const data = await (
             await this.request(`${this.url}${aniDbId}`, {
                 headers: {
-                    "User-Agent": "Anify",
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                    Cookie: "adbuin=1234567890-ehCL",
                 },
             })
         ).text();
@@ -168,7 +170,14 @@ export default class AniDB extends InformationProvider<IAnime | IManga, AnimeInf
 
     private async fetchEpisodeData(episode: { id: string; title: string; number: number; duration: string; airDate: number }): Promise<IEpisode | undefined> {
         try {
-            const response = await (await this.request(`${this.url}${episode.id}`)).text();
+            const response = await (
+                await this.request(`${this.url}${episode.id}`, {
+                    headers: {
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                        Cookie: "adbuin=1234567890-ehCL",
+                    },
+                })
+            ).text();
             const $ = load(response);
 
             const description = $("div.desc div.summary").text()?.trim() || null;
@@ -251,7 +260,8 @@ export default class AniDB extends InformationProvider<IAnime | IManga, AnimeInf
             await (
                 await this.request(`${this.url}${aniDbId}`, {
                     headers: {
-                        "User-Agent": "Anify",
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                        Cookie: "adbuin=1234567890-ehCL",
                     },
                     proxy: proxyURL,
                 })

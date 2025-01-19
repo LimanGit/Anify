@@ -6,7 +6,7 @@ export default class AniDBMeta extends MetaProvider {
     override id = "anidb";
     override url = "https://anidb.net";
 
-    public needsProxy: boolean = true;
+    public needsProxy: boolean = false;
     public useGoogleTranslate: boolean = false;
 
     override rateLimit = 0;
@@ -25,7 +25,12 @@ export default class AniDBMeta extends MetaProvider {
         const results: IProviderResult[] = [];
 
         const data = await (
-            await this.request(`${this.url}/search/fulltext/?adb.search=${encodeURIComponent(query)}&do.search=1&entity.animetb=1&field.titles=1${format && format !== MediaFormat.UNKNOWN ? `&${this.formatMapping[format?.toUpperCase() as keyof typeof this.formatMapping]}` : ""}`)
+            await this.request(`${this.url}/search/anime/?adb.search=${encodeURIComponent(query)}&do.search=1&entity.animetb=1&field.titles=1${format && format !== MediaFormat.UNKNOWN ? `&${this.formatMapping[format?.toUpperCase() as keyof typeof this.formatMapping]}` : ""}`, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                    Cookie: "adbuin=1234567890-ehCL",
+                },
+            })
         ).text();
 
         const $ = load(data);
@@ -36,7 +41,14 @@ export default class AniDBMeta extends MetaProvider {
             promises.push(
                 new Promise(async (resolve) => {
                     const id = ($(el).find("td.relid a").attr("href") ?? "").split("/anime/")[1]?.split("?")[0];
-                    const req = await (await this.request(`${this.url}/anime/${id}`)).text();
+                    const req = await (
+                        await this.request(`${this.url}/anime/${id}`, {
+                            headers: {
+                                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                                Cookie: "adbuin=1234567890-ehCL",
+                            },
+                        })
+                    ).text();
                     const $$ = load(req);
 
                     const english = $$("div.info div.titles tr.official").first()?.find("td.value label").text();
