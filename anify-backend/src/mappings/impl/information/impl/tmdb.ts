@@ -111,22 +111,49 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
             let seasonId = "";
             let seasonNumber = 0;
 
-            let closestYearDiff = Infinity;
-
             const seasons = data.seasons;
 
+            // Score-based season selection
+            let bestScore = -1;
+            let bestSeason = null;
+
             for (const season of seasons) {
+                let score = 0;
+
+                // Year proximity score (max 3 points)
                 if (season.air_date && media.year) {
                     const seasonYear = new Date(season.air_date).getFullYear();
                     const yearDiff = Math.abs(seasonYear - media.year);
+                    if (yearDiff === 0) score += 3;
+                    else if (yearDiff === 1) score += 2;
+                    else if (yearDiff <= 2) score += 1;
+                }
 
-                    if (yearDiff < closestYearDiff || season.episode_count === (media as IAnime).totalEpisodes) {
-                        closestYearDiff = yearDiff;
-                        seasonId = String(season.id);
-                        seasonNumber = season.season_number;
-                    }
+                // Episode count match (3 points)
+                if (season.episode_count === (media as IAnime).totalEpisodes) {
+                    score += 3;
+                }
+
+                // Avoid seasons with 0 episodes
+                if (season.episode_count === 0) {
+                    continue;
+                }
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestSeason = season;
                 }
             }
+
+            // If no good match found, try to find the first valid season
+            if (!bestSeason) {
+                bestSeason = seasons.find((s) => s.episode_count > 0 && s.season_number > 0);
+            }
+
+            if (!bestSeason) return undefined;
+
+            seasonId = String(bestSeason.id);
+            seasonNumber = bestSeason.season_number;
 
             if (seasonId.length === 0) return undefined;
 
