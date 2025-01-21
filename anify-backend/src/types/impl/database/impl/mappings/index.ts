@@ -53,5 +53,5 @@ export interface IEpisodeData {
  */
 export interface IChapterData {
     providerId: string;
-    episodes: IChapter[];
+    chapters: IChapter[];
 }

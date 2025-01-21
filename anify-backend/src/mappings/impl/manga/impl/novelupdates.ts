@@ -171,7 +171,7 @@ export default class NovelUpdates extends MangaProvider {
             chapter.number = idx;
         });
 
-        return chapters;
+        return chapters.reverse();
     }
 
     override async fetchPages(id: string, proxy: boolean = true, chapter: IChapter | null = null): Promise<IPage[] | string | undefined> {

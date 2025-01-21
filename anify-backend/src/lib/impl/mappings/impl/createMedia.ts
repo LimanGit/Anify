@@ -20,14 +20,11 @@ export async function createMedia(mappings: IMappedResult[], type: MediaType): P
 
     for (const mapping of mappings) {
         let hasPushed = false;
-        const provider =
-            (await ANIME_PROVIDERS.find(async (prov) => (await prov())?.id === mapping.data.providerId)?.()) ??
-            (await MANGA_PROVIDERS.find(async (prov) => (await prov())?.id === mapping.data.providerId)?.()) ??
-            (await INFORMATION_PROVIDERS.find(async (prov) => (await prov()).id === mapping.data.providerId)) ??
-            (await META_PROVIDERS.find(async (prov) => (await prov())?.id === mapping.data.providerId)?.()) ??
-            null;
+        const metaProviders = await META_PROVIDERS.map(async (prov) => await prov());
+        const animeProviders = await ANIME_PROVIDERS.map(async (prov) => await prov());
+        const mangaProviders = await MANGA_PROVIDERS.map(async (prov) => await prov());
 
-        const providerType = typeof provider === "function" ? undefined : provider?.providerType;
+        const provider = await Promise.all([...metaProviders, ...animeProviders, ...mangaProviders]).then((providers) => providers.find((p) => p.id === mapping.data.providerId));
 
         for (const result of results) {
             if (result.id === mapping.id) {
@@ -36,7 +33,7 @@ export async function createMedia(mappings: IMappedResult[], type: MediaType): P
                 const toPush = {
                     id: mapping.data.id,
                     providerId: mapping.data.providerId,
-                    providerType: providerType ?? ProviderType.ANIME,
+                    providerType: provider?.providerType ?? ProviderType.ANIME,
                     similarity: mapping.similarity,
                 };
 
