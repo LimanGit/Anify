@@ -1,4 +1,4 @@
-import type { IEpubCredentials } from "../../../../types/impl/lib/impl/epub";
+import type { IEpubCredentials } from "../../../../../types/impl/lib/impl/epub";
 
 export const checkIfDeleted = async (credentials: IEpubCredentials, fileRef: string): Promise<boolean> => {
     let pages = 1;

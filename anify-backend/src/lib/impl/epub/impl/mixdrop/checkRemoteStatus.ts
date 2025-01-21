@@ -1,4 +1,4 @@
-import type { IEpubCredentials, IEpubUploadStatus } from "../../../../types/impl/lib/impl/epub";
+import type { IEpubCredentials, IEpubUploadStatus } from "../../../../../types/impl/lib/impl/epub";
 
 export const checkRemoteStatus = async (credentials: IEpubCredentials, mixdrop: string): Promise<IEpubUploadStatus> => {
     const mixdropEmail = credentials.email;

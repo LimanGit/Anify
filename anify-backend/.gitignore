@@ -29,7 +29,7 @@ yarn-error.log*
 manami.json
 database.json
 /manga
-**/lib/impl/epub/manga
+**/lib/impl/epub/impl/manga
 bun.lockb
 animeProxies.json
 baseProxies.json

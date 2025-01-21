@@ -1,11 +1,11 @@
-import { db } from "../../../../database";
-import { MangaRepository } from "../../../../database/impl/wrapper/impl/manga";
-import type { IManga } from "../../../../types/impl/database/impl/schema/manga";
-import type { IEpubCredentials } from "../../../../types/impl/lib/impl/epub";
+import { db } from "../../../../../database";
+import { MangaRepository } from "../../../../../database/impl/wrapper/impl/manga";
+import type { IManga } from "../../../../../types/impl/database/impl/schema/manga";
+import type { IEpubCredentials } from "../../../../../types/impl/lib/impl/epub";
 import { unlink, readdir } from "fs/promises";
 import colors from "colors";
-import { emitter } from "../../../../events";
-import { Events } from "../../../../types/impl/events";
+import { emitter } from "../../../../../events";
+import { Events } from "../../../../../types/impl/events";
 import { checkRemoteStatus } from "./checkRemoteStatus";
 
 export const uploadEpub = async (epub: string, credentials: IEpubCredentials, manga: IManga) => {

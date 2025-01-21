@@ -1,3 +1,13 @@
+import type { IManga } from "../../database/impl/schema/manga";
+
+export interface ImageFile {
+    [key: string]: ArrayBuffer;
+}
+
+export interface IMangaWithCover extends IManga {
+    coverPath: string;
+}
+
 export interface IEpubCredentials {
     email: string;
     key: string;
