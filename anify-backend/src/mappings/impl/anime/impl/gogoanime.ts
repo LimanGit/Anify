@@ -37,26 +37,46 @@ export default class GogoAnime extends AnimeProvider {
 
         const $ = load(data);
 
+        const promises: Promise<void>[] = [];
+
         $("ul.items > li").map((i, el) => {
-            const title = $("p.name a", el).text().trim();
-            const id = $(el).find("div.img a").attr("href")!;
-            const releasedText = $("p.released", el).text().trim();
-            const yearMatch = releasedText.match(/Released:\s+(\d{4})/);
-            const year = yearMatch ? parseInt(yearMatch[1]) : 0;
-            const img = $(el).find("div.img a img").attr("src")!;
+            promises.push(
+                new Promise(async (resolve) => {
+                    const title = $("p.name a", el).text().trim();
+                    const id = $(el).find("div.img a").attr("href")!;
+                    const releasedText = $("p.released", el).text().trim();
+                    const yearMatch = releasedText.match(/Released:\s+(\d{4})/);
+                    const year = yearMatch ? parseInt(yearMatch[1]) : 0;
+                    const img = $(el).find("div.img a img").attr("src")!;
 
-            const format: MediaFormat = MediaFormat.UNKNOWN;
+                    const data = await this.request(`${this.url}${id}`);
+                    const $$ = load(await data.text());
 
-            results.push({
-                id: id,
-                title: title,
-                altTitles: [],
-                img: img,
-                format,
-                year: year,
-                providerId: this.id,
-            });
+                    const type = $$("p.type a").attr("title");
+                    const format = type === "TV Series" ? MediaFormat.TV : type === "Movie" ? MediaFormat.MOVIE : type === "Special" ? MediaFormat.SPECIAL : type === "ONA" ? MediaFormat.ONA : type === "OVA" ? MediaFormat.OVA : MediaFormat.UNKNOWN;
+
+                    const altTitles: string[] = [];
+                    const otherNames = $$("p.other-name a").attr("title")?.split(", ");
+                    if (otherNames) {
+                        altTitles.push(...otherNames);
+                    }
+
+                    results.push({
+                        id: id,
+                        title: title,
+                        altTitles,
+                        img: img,
+                        format,
+                        year: year,
+                        providerId: this.id,
+                    });
+
+                    resolve();
+                }),
+            );
         });
+
+        await Promise.all(promises);
 
         return results;
     }
