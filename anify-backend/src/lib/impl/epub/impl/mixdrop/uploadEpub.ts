@@ -2,94 +2,110 @@ import { db } from "../../../../../database";
 import { MangaRepository } from "../../../../../database/impl/wrapper/impl/manga";
 import type { IManga } from "../../../../../types/impl/database/impl/schema/manga";
 import type { IEpubCredentials } from "../../../../../types/impl/lib/impl/epub";
-import { unlink, readdir } from "fs/promises";
+import { unlink, readdir, rm } from "fs/promises";
 import colors from "colors";
 import { emitter } from "../../../../../events";
 import { Events } from "../../../../../types/impl/events";
 import { checkRemoteStatus } from "./checkRemoteStatus";
 
-export const uploadEpub = async (epub: string, credentials: IEpubCredentials, manga: IManga) => {
-    const file = Bun.file(epub);
-    if (!file.exists()) return await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, "");
+interface MixdropResponse {
+    success: boolean;
+    result?: {
+        fileref: string;
+        [key: string]: unknown;
+    };
+}
 
-    const form = new FormData();
-    form.append("email", credentials.email);
-    form.append("key", credentials.key);
-    form.append("file", file);
+const UPLOAD_TIMEOUT = 100; // Maximum number of retries
+const POLLING_INTERVAL = 1000; // 1 second
 
-    const result = (await (
-        await fetch("https://ul.mixdrop.ag/api", {
-            method: "POST",
-            body: form,
-        })
-    ).json()) as { success: boolean; result?: { fileref: string } };
+async function cleanupFiles(epubPath: string): Promise<void> {
+    try {
+        await unlink(epubPath);
 
-    if (result.success) {
-        /**
-         * @description Update the manga with the mixdrop fileref
-         */
-        for (const chap of manga.chapters.data) {
-            Object.assign(chap, { mixdrop: result.result?.fileref });
+        // Cleanup parent directories if empty
+        const parentDir = epubPath.split("/").slice(0, -1).join("/");
+        const parentParentDir = parentDir.split("/").slice(0, -1).join("/");
+
+        for (const dir of [parentDir, parentParentDir]) {
+            try {
+                const files = await readdir(dir);
+                if (files.length === 0) {
+                    await rm(dir, { recursive: true });
+                }
+            } catch (err) {
+                console.error(colors.yellow(`Warning: Could not cleanup directory ${dir}`), err);
+            }
+        }
+    } catch (err) {
+        console.error(colors.yellow("Warning: File cleanup failed"), err);
+    }
+}
+
+async function waitForUploadCompletion(credentials: IEpubCredentials, fileref: string, manga: IManga): Promise<boolean> {
+    let attempts = 0;
+
+    while (attempts < UPLOAD_TIMEOUT) {
+        const status = await checkRemoteStatus(credentials, fileref);
+        const key = Object.keys(status.result)[0];
+
+        if (status.result[key].status === "OK") {
+            console.log(colors.green("Completed uploading novel ") + colors.blue(manga.title?.english ?? manga.title?.romaji ?? manga.title?.native ?? "") + colors.green(" to Mixdrop"));
+            return true;
         }
 
-        await MangaRepository.updatePartially(db, manga.id, { chapters: manga.chapters });
+        attempts++;
+        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+    }
 
-        const maxThreshold = 100;
-        let threshold = 0;
+    console.error(colors.red("ERROR: ") + colors.blue(`Mixdrop upload for ${manga.title?.english ?? manga.title?.romaji ?? manga.title?.native ?? ""} timed out.`));
+    return false;
+}
 
-        const interval = setInterval(async () => {
-            const isComplete = await checkRemoteStatus(credentials, result.result?.fileref ?? "");
-            const key = Object.keys(isComplete.result)[0];
+export const uploadEpub = async (epub: string, credentials: IEpubCredentials, manga: IManga): Promise<boolean> => {
+    const file = Bun.file(epub);
+    if (!file.exists()) {
+        await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, "");
+        return false;
+    }
 
-            if (isComplete.result[key].status === "OK") {
-                console.log(colors.green("Completed uploading novel ") + colors.blue(manga.title?.english ?? manga.title?.romaji ?? manga.title?.native ?? "") + colors.green(" to Mixdrop"));
-                try {
-                    await unlink(epub);
-                    // Try to delete parent folders
-                    const parentFolder = epub.split("/").slice(0, -1).join("/");
-                    if ((await readdir(parentFolder)).length === 0) {
-                        await unlink(parentFolder);
-                        const parentParentFolder = parentFolder.split("/").slice(0, -1).join("/");
-                        if ((await readdir(parentParentFolder)).length === 0) {
-                            await unlink(parentParentFolder);
-                        }
-                    }
-                } catch {
-                    //
-                }
+    try {
+        const form = new FormData();
+        form.append("email", credentials.email);
+        form.append("key", credentials.key);
+        form.append("file", file);
 
-                clearInterval(interval);
-                return;
-            } else {
-                if (threshold >= maxThreshold + 5) {
-                    console.error(colors.red("ERROR: ") + colors.blue(`Mixdrop upload for ${manga.title?.english ?? manga.title?.romaji ?? manga.title?.native ?? ""} is taking too long.`));
-                    try {
-                        await unlink(epub);
-                        // Try to delete parent folders
-                        const parentFolder = epub.split("/").slice(0, -1).join("/");
-                        if ((await readdir(parentFolder)).length === 0) {
-                            await unlink(parentFolder);
-                            const parentParentFolder = parentFolder.split("/").slice(0, -1).join("/");
-                            if ((await readdir(parentParentFolder)).length === 0) {
-                                await unlink(parentParentFolder);
-                            }
-                        }
-                    } catch {
-                        //
-                    }
+        const response = await fetch("https://ul.mixdrop.ag/api", {
+            method: "POST",
+            body: form,
+        });
 
-                    clearInterval(interval);
-                    return;
-                }
-                threshold++;
-            }
-        }, 1000);
+        const result = (await response.json()) as MixdropResponse;
 
-        await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, result.result?.fileref);
-        return true;
-    } else {
-        console.log(result);
-        console.error(colors.red("Failed to upload epub to Mixdrop."));
-        return await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, false);
+        if (!result.success || !result.result?.fileref) {
+            console.error(colors.red("Failed to upload epub to Mixdrop:"), result);
+            await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, false);
+            return false;
+        }
+
+        // Update manga with mixdrop fileref
+        const updatedChapters = manga.chapters.data.map((chap) => ({
+            ...chap,
+            mixdrop: result.result?.fileref,
+        }));
+        await MangaRepository.updatePartially(db, manga.id, {
+            chapters: { ...manga.chapters, data: updatedChapters },
+        });
+
+        const uploadSuccess = await waitForUploadCompletion(credentials, result.result.fileref, manga);
+        await cleanupFiles(epub);
+
+        await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, uploadSuccess ? result.result.fileref : false);
+        return uploadSuccess;
+    } catch (error) {
+        console.error(colors.red("Upload failed with error:"), error);
+        await cleanupFiles(epub);
+        await emitter.emitAsync(Events.COMPLETED_NOVEL_UPLOAD, false);
+        return false;
     }
 };
