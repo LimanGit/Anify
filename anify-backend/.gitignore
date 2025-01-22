@@ -30,6 +30,7 @@ manami.json
 database.json
 /manga
 **/lib/impl/epub/impl/manga
+**/lib/impl/pdf/impl/manga
 bun.lockb
 animeProxies.json
 baseProxies.json

@@ -10,19 +10,33 @@ test(
     async (done) => {
         await initDB();
 
-        await MediaRepository.deleteById(db, MediaType.ANIME, "113415");
+        const animeId = "113415"; // Mushoku Tensei
+        const animeFormats = [MediaFormat.TV];
+        const mangaId = "bd6d0982-0091-4945-ad70-c028ed3c0917"; // Mushoku Tensei
+        const mangaFormats = [MediaFormat.MANGA];
 
-        const mappings = await lib.loadMapping({
-            id: "113415",
+        await MediaRepository.deleteById(db, MediaType.ANIME, animeId);
+        await MediaRepository.deleteById(db, MediaType.MANGA, mangaId);
+
+        const animeMappings = await lib.loadMapping({
+            id: animeId,
             type: MediaType.ANIME,
-            formats: [MediaFormat.TV],
+            formats: animeFormats,
+        });
+
+        const mangaMappings = await lib.loadMapping({
+            id: mangaId,
+            type: MediaType.MANGA,
+            formats: mangaFormats,
         });
 
         if (env.DEBUG) {
-            console.log(mappings[0]);
+            console.log(animeMappings[0]);
+            console.log(mangaMappings[0]);
         }
 
-        expect(mappings).not.toBeEmpty();
+        expect(animeMappings).not.toBeEmpty();
+        expect(mangaMappings).not.toBeEmpty();
 
         done();
     },
