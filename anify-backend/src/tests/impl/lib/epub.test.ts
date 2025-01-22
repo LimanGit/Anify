@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 import { db, init as initDB } from "../../../database";
 import lib from "../../../lib";
 import { env } from "../../../env";
@@ -38,6 +38,10 @@ test(
         if (env.DEBUG) {
             console.log(epub);
         }
+
+        expect(epub).toBeDefined();
+        expect(epub).not.toBeEmpty();
+
         done();
     },
     {

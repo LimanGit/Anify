@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 import { db, init as initDB } from "../../../database";
 import lib from "../../../lib";
 import { MediaFormat, MediaType } from "../../../types";
@@ -21,6 +21,9 @@ test(
         if (env.DEBUG) {
             console.log(mappings[0]);
         }
+
+        expect(mappings).not.toBeEmpty();
+
         done();
     },
     {

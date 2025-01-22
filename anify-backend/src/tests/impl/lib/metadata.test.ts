@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 import lib from "../../../lib";
 import { MediaFormat, MediaSeason, MediaType, ProviderType } from "../../../types";
 import { env } from "../../../env";
@@ -66,6 +66,9 @@ test(
         if (env.DEBUG) {
             console.log(metadata);
         }
+
+        expect(metadata).not.toBeEmpty();
+
         done();
     },
     {

@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 import { init as initDB } from "../../../database";
 import lib from "../../../lib";
 import { MediaFormat, MediaSeason, MediaType, ProviderType } from "../../../types";
@@ -69,6 +69,9 @@ test(
         if (env.DEBUG) {
             console.log(episodes);
         }
+
+        expect(episodes).not.toBeEmpty();
+
         done();
     },
     {
