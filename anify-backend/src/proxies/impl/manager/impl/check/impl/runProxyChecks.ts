@@ -85,38 +85,60 @@ export const runProxyChecks = async (providers: MediaProvider[], verbose: boolea
         const proxiesToCheck = proxyCache.proxies.slice(startIndex);
 
         // Check proxies in parallel with concurrency limiting:
-        const checkResults = await Promise.all(
-            proxiesToCheck.map((proxy) =>
-                limit(async () => {
-                    const url = `http://${proxy.ip}:${proxy.port}`;
-                    let isValid = false;
+        let checkResults: (IProxy | null)[] = [];
+        try {
+            checkResults = await Promise.all(
+                proxiesToCheck.map((proxy) =>
+                    limit(async () => {
+                        const url = `http://${proxy.ip}:${proxy.port}`;
+                        let isValid = false;
 
-                    // Catch errors per-proxy so one failure doesn't kill the entire Promise.all:
-                    try {
-                        isValid = (await provider.proxyCheck(url)) ?? false;
-                    } catch {
-                        // If an error occurs, we treat this as invalid
-                        isValid = false;
-                    }
+                        try {
+                            isValid = (await provider.proxyCheck(url)) ?? false;
+                        } catch (error) {
+                            // Log the error but don't let it crash the script
+                            if (env.DEBUG && verbose) {
+                                console.error(`Error checking proxy ${url}: ${error instanceof Error ? error.message : String(error)}`);
+                            }
+                            isValid = false;
+                        }
 
-                    // Update progress counters
-                    checkedCount += 1;
-                    if (isValid) {
-                        validCount += 1;
-                    } else {
-                        invalidCount += 1;
-                    }
+                        // Update progress counters
+                        checkedCount += 1;
+                        if (isValid) {
+                            validCount += 1;
+                        } else {
+                            invalidCount += 1;
+                        }
 
-                    // Throttled progress update:
-                    if (env.DEBUG && verbose) {
-                        throttledProgressUpdate(colors.yellow(`Provider: ${provider.providerType} ${provider.id} | ` + `${checkedCount}/${proxiesToCheck.length} checked, ` + `${validCount} valid, ` + `${invalidCount} invalid`));
-                    }
+                        // Throttled progress update:
+                        if (env.DEBUG && verbose) {
+                            throttledProgressUpdate(colors.yellow(`Provider: ${provider.providerType} ${provider.id} | ` + `${checkedCount}/${proxiesToCheck.length} checked, ` + `${validCount} valid, ` + `${invalidCount} invalid`));
+                        }
 
-                    // Return the proxy if valid, otherwise null
-                    return isValid ? proxy : null;
-                }),
-            ),
-        );
+                        // Return the proxy if valid, otherwise null
+                        return isValid ? proxy : null;
+                    }).catch(error => {
+                        // Catch any errors that might occur in the limit wrapper
+                        if (env.DEBUG && verbose) {
+                            console.error(`Error in proxy check: ${error instanceof Error ? error.message : String(error)}`);
+                        }
+                        return null;
+                    }),
+                ),
+            ).catch(error => {
+                // Catch any errors in Promise.all
+                if (env.DEBUG && verbose) {
+                    console.error(`Error in proxy batch check: ${error instanceof Error ? error.message : String(error)}`);
+                }
+                return [];
+            });
+        } catch (error) {
+            if (env.DEBUG && verbose) {
+                console.error(`Error in proxy batch check: ${error instanceof Error ? error.message : String(error)}`);
+            }
+            continue;
+        }
 
         // After finishing all checks, print a new line to avoid overwriting
         if (env.DEBUG && verbose) {

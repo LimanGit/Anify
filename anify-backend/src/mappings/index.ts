@@ -123,6 +123,10 @@ export const META_PROVIDERS = [
         const { default: KitsuMeta } = await import("./impl/meta/impl/kitsu");
         return new KitsuMeta();
     },
+    async () => {
+        const { default: MALMeta } = await import("./impl/meta/impl/mal");
+        return new MALMeta();
+    },
 ];
 
 export const PROVIDERS = Promise.all([...BASE_PROVIDERS.map((provider) => provider()), ...ANIME_PROVIDERS.map((provider) => provider()), ...MANGA_PROVIDERS.map((provider) => provider()), ...INFORMATION_PROVIDERS.map((provider) => provider()), ...META_PROVIDERS.map((provider) => provider())]);

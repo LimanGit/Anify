@@ -44,14 +44,17 @@ export abstract class MediaProvider {
             const proxy = getRandomProxy(this.providerType, this.id);
             const useProxy = (config.proxy && config.proxy.length > 0) || proxyRequest || this.needsProxy;
 
-            return customRequest(url, {
+            // Ensure isChecking is properly set
+            const finalConfig: IRequestConfig = {
+                ...config,
                 proxy: useProxy ? (config.proxy && config.proxy.length > 0 ? config.proxy : (proxy ?? undefined)) : undefined,
                 useGoogleTranslate: this.useGoogleTranslate,
                 providerId: this.id,
                 providerType: this.providerType,
-                isChecking: this.isCheckingProxies,
-                ...config,
-            });
+                isChecking: this.isCheckingProxies || config.isChecking
+            };
+
+            return customRequest(url, finalConfig);
         });
     }
 }

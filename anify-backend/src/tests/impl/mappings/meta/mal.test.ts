@@ -1,15 +1,15 @@
 import { expect, test } from "bun:test";
 import { env } from "../../../../env";
 import { preloadProxies } from "../../../../proxies/impl/manager/impl/file/preloadProxies";
-import KitsuMeta from "../../../../mappings/impl/meta/impl/kitsu";
+import MALMeta from "../../../../mappings/impl/meta/impl/mal";
 
-const kitsu = new KitsuMeta();
+const mal = new MALMeta();
 
 test(
-    "Meta.Kitsu.Search",
+    "Meta.MAL.Search",
     async (done) => {
         await preloadProxies();
-        const data = await kitsu.search("Mushoku Tensei");
+        const data = await mal.search("Mushoku Tensei");
 
         expect(data).toBeDefined();
         expect(data).not.toBeEmpty();

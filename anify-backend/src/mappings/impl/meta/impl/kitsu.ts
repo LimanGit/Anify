@@ -12,8 +12,6 @@ export default class KitsuMeta extends MetaProvider {
     override maxConcurrentRequests: number = -1;
     override formats: MediaFormat[] = [MediaFormat.TV, MediaFormat.MOVIE, MediaFormat.ONA, MediaFormat.SPECIAL, MediaFormat.TV_SHORT, MediaFormat.OVA, MediaFormat.MANGA, MediaFormat.ONE_SHOT, MediaFormat.NOVEL];
 
-    public preferredTitle: "english" | "romaji" | "native" = "native";
-
     private api = "https://kitsu.io/api/edge";
 
     override async search(query: string): Promise<IProviderResult[] | undefined> {
