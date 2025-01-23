@@ -131,6 +131,10 @@ export const META_PROVIDERS = [
         const { default: TMDBMeta } = await import("./impl/meta/impl/tmdb");
         return new TMDBMeta();
     },
+    async () => {
+        const { default: TVDBMeta } = await import("./impl/meta/impl/tvdb");
+        return new TVDBMeta();
+    },
 ];
 
 export const PROVIDERS = Promise.all([...BASE_PROVIDERS.map((provider) => provider()), ...ANIME_PROVIDERS.map((provider) => provider()), ...MANGA_PROVIDERS.map((provider) => provider()), ...INFORMATION_PROVIDERS.map((provider) => provider()), ...META_PROVIDERS.map((provider) => provider())]);
