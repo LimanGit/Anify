@@ -2,7 +2,6 @@ import { redis } from "../../..";
 import { db } from "../../../../database";
 import { MediaRepository } from "../../../../database/impl/wrapper/impl/media";
 import { env } from "../../../../env";
-import lib from "../../../../lib";
 import middleware from "../../middleware";
 
 const handler = async (req: Request): Promise<Response> => {
@@ -23,19 +22,17 @@ const handler = async (req: Request): Promise<Response> => {
             return middleware.createResponse(JSON.stringify({ error: "No ID provided." }), 400);
         }
 
-        const cached = await redis.get(`content-metadata:${id}`);
+        const cached = await redis.get(`info:${id}`);
         if (cached) {
             return middleware.createResponse(cached);
         }
 
-        const media = await MediaRepository.getByIdAuto(db, id);
-        if (!media) {
+        const data = await MediaRepository.getByIdAuto(db, id);
+        if (!data) {
             return middleware.createResponse(JSON.stringify({ error: "Media not found." }), 404);
         }
 
-        const data = await lib.content.loadMetadata(media);
-
-        await redis.set(`content-metadata:${id}`, JSON.stringify(data), "EX", env.REDIS_CACHE_TIME);
+        await redis.set(`info:${id}`, JSON.stringify(data), "EX", env.REDIS_CACHE_TIME);
 
         return middleware.createResponse(JSON.stringify(data));
     } catch (e) {
@@ -45,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 const route = {
-    path: "/content-metadata",
+    path: "/info",
     handler,
     rateLimit: 50,
 };

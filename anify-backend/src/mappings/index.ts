@@ -119,6 +119,10 @@ export const META_PROVIDERS = [
         const { default: AniDBMeta } = await import("./impl/meta/impl/anidb");
         return new AniDBMeta();
     },
+    async () => {
+        const { default: KitsuMeta } = await import("./impl/meta/impl/kitsu");
+        return new KitsuMeta();
+    },
 ];
 
 export const PROVIDERS = Promise.all([...BASE_PROVIDERS.map((provider) => provider()), ...ANIME_PROVIDERS.map((provider) => provider()), ...MANGA_PROVIDERS.map((provider) => provider()), ...INFORMATION_PROVIDERS.map((provider) => provider()), ...META_PROVIDERS.map((provider) => provider())]);
