@@ -118,7 +118,7 @@ export const runProxyChecks = async (providers: MediaProvider[], verbose: boolea
 
                         // Return the proxy if valid, otherwise null
                         return isValid ? proxy : null;
-                    }).catch(error => {
+                    }).catch((error) => {
                         // Catch any errors that might occur in the limit wrapper
                         if (env.DEBUG && verbose) {
                             console.error(`Error in proxy check: ${error instanceof Error ? error.message : String(error)}`);
@@ -126,7 +126,7 @@ export const runProxyChecks = async (providers: MediaProvider[], verbose: boolea
                         return null;
                     }),
                 ),
-            ).catch(error => {
+            ).catch((error) => {
                 // Catch any errors in Promise.all
                 if (env.DEBUG && verbose) {
                     console.error(`Error in proxy batch check: ${error instanceof Error ? error.message : String(error)}`);

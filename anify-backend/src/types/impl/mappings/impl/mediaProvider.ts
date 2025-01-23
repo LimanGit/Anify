@@ -51,7 +51,7 @@ export abstract class MediaProvider {
                 useGoogleTranslate: this.useGoogleTranslate,
                 providerId: this.id,
                 providerType: this.providerType,
-                isChecking: this.isCheckingProxies || config.isChecking
+                isChecking: this.isCheckingProxies || config.isChecking,
             };
 
             return customRequest(url, finalConfig);

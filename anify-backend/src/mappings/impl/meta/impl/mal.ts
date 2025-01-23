@@ -84,15 +84,15 @@ export default class MALMeta extends MetaProvider {
                                     ? parseInt(premiered.split(" ")[1]?.split(" ")[0], 10)
                                     : null
                                 : date === "-"
-                                ? 0
-                                : new Date(date).getFullYear()
+                                  ? 0
+                                  : new Date(date).getFullYear()
                             : Number.isNaN(date === "-" ? 0 : new Date(date).getFullYear())
-                            ? published
-                                ? new Date(published.split(" to")[0]).getFullYear()
-                                : null
-                            : date === "-"
-                            ? 0
-                            : new Date(date).getFullYear();
+                              ? published
+                                  ? new Date(published.split(" to")[0]).getFullYear()
+                                  : null
+                              : date === "-"
+                                ? 0
+                                : new Date(date).getFullYear();
 
                     const alternativeTitlesDiv = $$("h2:contains('Alternative Titles')").nextUntil("h2:contains('Information')").first();
                     const additionalTitles = alternativeTitlesDiv
@@ -120,34 +120,34 @@ export default class MALMeta extends MetaProvider {
                             format === "Music"
                                 ? MediaFormat.MUSIC
                                 : format === "TV"
-                                ? MediaFormat.TV
-                                : format === "Movie"
-                                ? MediaFormat.MOVIE
-                                : format === "TV Short"
-                                ? MediaFormat.TV_SHORT
-                                : format === "OVA"
-                                ? MediaFormat.OVA
-                                : format === "ONA"
-                                ? MediaFormat.ONA
-                                : format === "Manga"
-                                ? MediaFormat.MANGA
-                                : format === "One-shot"
-                                ? MediaFormat.ONE_SHOT
-                                : format === "Doujinshi"
-                                ? MediaFormat.MANGA
-                                : format === "Light Novel"
-                                ? MediaFormat.NOVEL
-                                : format === "Novel"
-                                ? MediaFormat.NOVEL
-                                : format === "Special"
-                                ? MediaFormat.SPECIAL
-                                : format === "TV Special"
-                                ? MediaFormat.TV_SHORT
-                                : format === "Manhwa"
-                                ? MediaFormat.MANGA
-                                : format === "Manhua"
-                                ? MediaFormat.MANGA
-                                : MediaFormat.UNKNOWN,
+                                  ? MediaFormat.TV
+                                  : format === "Movie"
+                                    ? MediaFormat.MOVIE
+                                    : format === "TV Short"
+                                      ? MediaFormat.TV_SHORT
+                                      : format === "OVA"
+                                        ? MediaFormat.OVA
+                                        : format === "ONA"
+                                          ? MediaFormat.ONA
+                                          : format === "Manga"
+                                            ? MediaFormat.MANGA
+                                            : format === "One-shot"
+                                              ? MediaFormat.ONE_SHOT
+                                              : format === "Doujinshi"
+                                                ? MediaFormat.MANGA
+                                                : format === "Light Novel"
+                                                  ? MediaFormat.NOVEL
+                                                  : format === "Novel"
+                                                    ? MediaFormat.NOVEL
+                                                    : format === "Special"
+                                                      ? MediaFormat.SPECIAL
+                                                      : format === "TV Special"
+                                                        ? MediaFormat.TV_SHORT
+                                                        : format === "Manhwa"
+                                                          ? MediaFormat.MANGA
+                                                          : format === "Manhua"
+                                                            ? MediaFormat.MANGA
+                                                            : MediaFormat.UNKNOWN,
                         img,
                         providerId: this.id,
                     });
@@ -162,23 +162,29 @@ export default class MALMeta extends MetaProvider {
         return results;
     }
 
+    private async fetchForProxyCheck(proxyURL: string): Promise<boolean> {
+        const requestConfig: IRequestConfig = {
+            proxy: proxyURL,
+            isChecking: true,
+        };
+
+        try {
+            const url = `${this.url}/anime.php?q=Mushoku%20Tensei`;
+            const response = await this.request(url, requestConfig);
+            const data = await response.text();
+            const $ = load(data);
+
+            // Just check if we can find any search results
+            return $("div.js-categories-seasonal table tr").length > 0;
+        } catch {
+            return false;
+        }
+    }
+
     override async proxyCheck(proxyURL: string): Promise<boolean | undefined> {
         try {
-            const results: IProviderResult[] = [];
-
-            const anime = await this.fetchResults("Mushoku Tensei", MediaType.ANIME, proxyURL).catch(() => undefined);
-            const manga = await this.fetchResults("Mushoku Tensei", MediaType.MANGA, proxyURL).catch(() => undefined);
-
-            if (anime) {
-                results.push(...anime);
-            }
-
-            if (manga) {
-                results.push(...manga);
-            }
-
-            return results.length > 0;
-        } catch  {
+            return await this.fetchForProxyCheck(proxyURL);
+        } catch {
             return false;
         }
     }
