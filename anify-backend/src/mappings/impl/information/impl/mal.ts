@@ -43,6 +43,25 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
         }
     }
 
+    private formatMapping = {
+        "Music": MediaFormat.MUSIC,
+        "TV": MediaFormat.TV,
+        "Movie": MediaFormat.MOVIE,
+        "TV Short": MediaFormat.TV_SHORT,
+        "OVA": MediaFormat.OVA,
+        "ONA": MediaFormat.ONA,
+        "Manga": MediaFormat.MANGA,
+        "One-shot": MediaFormat.ONE_SHOT,
+        "Doujinshi": MediaFormat.MANGA,
+        "Light Novel": MediaFormat.NOVEL,
+        "Novel": MediaFormat.NOVEL,
+        "Special": MediaFormat.SPECIAL,
+        "TV Special": MediaFormat.TV_SHORT,
+        "Manhwa": MediaFormat.MANGA,
+        "Manhua": MediaFormat.MANGA,
+        "default": MediaFormat.UNKNOWN
+      };
+
     private async fetchAnime(id: string, proxyURL: string = ""): Promise<AnimeInfo | undefined> {
         const data = await (
             await this.request(`${this.url}/anime/${id}`, {
@@ -221,38 +240,7 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
 
                         relations.push({
                             id,
-                            format:
-                                format === "Music"
-                                    ? MediaFormat.MUSIC
-                                    : format === "TV"
-                                      ? MediaFormat.TV
-                                      : format === "Movie"
-                                        ? MediaFormat.MOVIE
-                                        : format === "TV Short"
-                                          ? MediaFormat.TV_SHORT
-                                          : format === "OVA"
-                                            ? MediaFormat.OVA
-                                            : format === "ONA"
-                                              ? MediaFormat.ONA
-                                              : format === "Manga"
-                                                ? MediaFormat.MANGA
-                                                : format === "One-shot"
-                                                  ? MediaFormat.ONE_SHOT
-                                                  : format === "Doujinshi"
-                                                    ? MediaFormat.MANGA
-                                                    : format === "Light Novel"
-                                                      ? MediaFormat.NOVEL
-                                                      : format === "Novel"
-                                                        ? MediaFormat.NOVEL
-                                                        : format === "Special"
-                                                          ? MediaFormat.SPECIAL
-                                                          : format === "TV Special"
-                                                            ? MediaFormat.TV_SHORT
-                                                            : format === "Manhwa"
-                                                              ? MediaFormat.MANGA
-                                                              : format === "Manhua"
-                                                                ? MediaFormat.MANGA
-                                                                : MediaFormat.UNKNOWN,
+                            format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
                             relationType: relation,
                             title: {
                                 english: title.english,
@@ -308,49 +296,19 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
                             japanese: $$("span:contains('Japanese:')").length > 0 ? $$("span:contains('Japanese:')").parent().text().replace($$("span:contains('Japanese:')").text(), "").replace(/\s+/g, " ").trim() : null,
                             alternatives: additionalTitles,
                         };
-
+                          
                         relations.push({
                             id,
-                            format:
-                                format === "Music"
-                                    ? MediaFormat.MUSIC
-                                    : format === "TV"
-                                      ? MediaFormat.TV
-                                      : format === "Movie"
-                                        ? MediaFormat.MOVIE
-                                        : format === "TV Short"
-                                          ? MediaFormat.TV_SHORT
-                                          : format === "OVA"
-                                            ? MediaFormat.OVA
-                                            : format === "ONA"
-                                              ? MediaFormat.ONA
-                                              : format === "Manga"
-                                                ? MediaFormat.MANGA
-                                                : format === "One-shot"
-                                                  ? MediaFormat.ONE_SHOT
-                                                  : format === "Doujinshi"
-                                                    ? MediaFormat.MANGA
-                                                    : format === "Light Novel"
-                                                      ? MediaFormat.NOVEL
-                                                      : format === "Novel"
-                                                        ? MediaFormat.NOVEL
-                                                        : format === "Special"
-                                                          ? MediaFormat.SPECIAL
-                                                          : format === "TV Special"
-                                                            ? MediaFormat.TV_SHORT
-                                                            : format === "Manhwa"
-                                                              ? MediaFormat.MANGA
-                                                              : format === "Manhua"
-                                                                ? MediaFormat.MANGA
-                                                                : MediaFormat.UNKNOWN,
+                            format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
                             relationType: relation,
                             title: {
-                                english: title.english,
-                                native: title.japanese,
-                                romaji: title.main,
-                            },
-                            type,
-                        });
+                                  english: title.english,
+                                  native: title.japanese,
+                                  romaji: title.main,
+                              },
+                              type,
+                          });
+                          
 
                         resolve();
                     }),
@@ -413,38 +371,7 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
             type: MediaType.ANIME,
             rating: score ? score : null,
             popularity: popularity ? parseInt(popularity, 10) : null,
-            format:
-                format === "Music"
-                    ? MediaFormat.MUSIC
-                    : format === "TV"
-                      ? MediaFormat.TV
-                      : format === "Movie"
-                        ? MediaFormat.MOVIE
-                        : format === "TV Short"
-                          ? MediaFormat.TV_SHORT
-                          : format === "OVA"
-                            ? MediaFormat.OVA
-                            : format === "ONA"
-                              ? MediaFormat.ONA
-                              : format === "Manga"
-                                ? MediaFormat.MANGA
-                                : format === "One-shot"
-                                  ? MediaFormat.ONE_SHOT
-                                  : format === "Doujinshi"
-                                    ? MediaFormat.MANGA
-                                    : format === "Light Novel"
-                                      ? MediaFormat.NOVEL
-                                      : format === "Novel"
-                                        ? MediaFormat.NOVEL
-                                        : format === "Special"
-                                          ? MediaFormat.SPECIAL
-                                          : format === "TV Special"
-                                            ? MediaFormat.TV_SHORT
-                                            : format === "Manhwa"
-                                              ? MediaFormat.MANGA
-                                              : format === "Manhua"
-                                                ? MediaFormat.MANGA
-                                                : MediaFormat.UNKNOWN,
+            format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
             totalEpisodes: episodes ? episodes : null,
             status: status === "Finished Airing" ? MediaStatus.FINISHED : status === "Currently Airing" ? MediaStatus.RELEASING : MediaStatus.NOT_YET_RELEASED,
             coverImage: imageURL,
@@ -625,38 +552,7 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
 
                         relations.push({
                             id,
-                            format:
-                                format === "Music"
-                                    ? MediaFormat.MUSIC
-                                    : format === "TV"
-                                      ? MediaFormat.TV
-                                      : format === "Movie"
-                                        ? MediaFormat.MOVIE
-                                        : format === "TV Short"
-                                          ? MediaFormat.TV_SHORT
-                                          : format === "OVA"
-                                            ? MediaFormat.OVA
-                                            : format === "ONA"
-                                              ? MediaFormat.ONA
-                                              : format === "Manga"
-                                                ? MediaFormat.MANGA
-                                                : format === "One-shot"
-                                                  ? MediaFormat.ONE_SHOT
-                                                  : format === "Doujinshi"
-                                                    ? MediaFormat.MANGA
-                                                    : format === "Light Novel"
-                                                      ? MediaFormat.NOVEL
-                                                      : format === "Novel"
-                                                        ? MediaFormat.NOVEL
-                                                        : format === "Special"
-                                                          ? MediaFormat.SPECIAL
-                                                          : format === "TV Special"
-                                                            ? MediaFormat.TV_SHORT
-                                                            : format === "Manhwa"
-                                                              ? MediaFormat.MANGA
-                                                              : format === "Manhua"
-                                                                ? MediaFormat.MANGA
-                                                                : MediaFormat.UNKNOWN,
+                            format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
                             relationType: relation,
                             title: {
                                 english: title.english,
@@ -715,38 +611,7 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
 
                         relations.push({
                             id,
-                            format:
-                                format === "Music"
-                                    ? MediaFormat.MUSIC
-                                    : format === "TV"
-                                      ? MediaFormat.TV
-                                      : format === "Movie"
-                                        ? MediaFormat.MOVIE
-                                        : format === "TV Short"
-                                          ? MediaFormat.TV_SHORT
-                                          : format === "OVA"
-                                            ? MediaFormat.OVA
-                                            : format === "ONA"
-                                              ? MediaFormat.ONA
-                                              : format === "Manga"
-                                                ? MediaFormat.MANGA
-                                                : format === "One-shot"
-                                                  ? MediaFormat.ONE_SHOT
-                                                  : format === "Doujinshi"
-                                                    ? MediaFormat.MANGA
-                                                    : format === "Light Novel"
-                                                      ? MediaFormat.NOVEL
-                                                      : format === "Novel"
-                                                        ? MediaFormat.NOVEL
-                                                        : format === "Special"
-                                                          ? MediaFormat.SPECIAL
-                                                          : format === "TV Special"
-                                                            ? MediaFormat.TV_SHORT
-                                                            : format === "Manhwa"
-                                                              ? MediaFormat.MANGA
-                                                              : format === "Manhua"
-                                                                ? MediaFormat.MANGA
-                                                                : MediaFormat.UNKNOWN,
+                            format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
                             relationType: relation,
                             title: {
                                 english: title.english,
@@ -817,38 +682,7 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
             type: MediaType.MANGA,
             rating: score ? score : null,
             popularity: popularity ? parseInt(popularity, 10) : null,
-            format:
-                format === "Music"
-                    ? MediaFormat.MUSIC
-                    : format === "TV"
-                      ? MediaFormat.TV
-                      : format === "Movie"
-                        ? MediaFormat.MOVIE
-                        : format === "TV Short"
-                          ? MediaFormat.TV_SHORT
-                          : format === "OVA"
-                            ? MediaFormat.OVA
-                            : format === "ONA"
-                              ? MediaFormat.ONA
-                              : format === "Manga"
-                                ? MediaFormat.MANGA
-                                : format === "One-shot"
-                                  ? MediaFormat.ONE_SHOT
-                                  : format === "Doujinshi"
-                                    ? MediaFormat.MANGA
-                                    : format === "Light Novel"
-                                      ? MediaFormat.NOVEL
-                                      : format === "Novel"
-                                        ? MediaFormat.NOVEL
-                                        : format === "Special"
-                                          ? MediaFormat.SPECIAL
-                                          : format === "TV Special"
-                                            ? MediaFormat.TV_SHORT
-                                            : format === "Manhwa"
-                                              ? MediaFormat.MANGA
-                                              : format === "Manhua"
-                                                ? MediaFormat.MANGA
-                                                : MediaFormat.UNKNOWN,
+            format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
             totalVolumes: volumes ? volumes : null,
             totalChapters: chapters ? chapters : null,
             status: status === "Finished Airing" ? MediaStatus.FINISHED : status === "Currently Airing" ? MediaStatus.RELEASING : MediaStatus.NOT_YET_RELEASED,
