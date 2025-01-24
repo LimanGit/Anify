@@ -44,23 +44,23 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
     }
 
     private formatMapping = {
-        "Music": MediaFormat.MUSIC,
-        "TV": MediaFormat.TV,
-        "Movie": MediaFormat.MOVIE,
+        Music: MediaFormat.MUSIC,
+        TV: MediaFormat.TV,
+        Movie: MediaFormat.MOVIE,
         "TV Short": MediaFormat.TV_SHORT,
-        "OVA": MediaFormat.OVA,
-        "ONA": MediaFormat.ONA,
-        "Manga": MediaFormat.MANGA,
+        OVA: MediaFormat.OVA,
+        ONA: MediaFormat.ONA,
+        Manga: MediaFormat.MANGA,
         "One-shot": MediaFormat.ONE_SHOT,
-        "Doujinshi": MediaFormat.MANGA,
+        Doujinshi: MediaFormat.MANGA,
         "Light Novel": MediaFormat.NOVEL,
-        "Novel": MediaFormat.NOVEL,
-        "Special": MediaFormat.SPECIAL,
+        Novel: MediaFormat.NOVEL,
+        Special: MediaFormat.SPECIAL,
         "TV Special": MediaFormat.TV_SHORT,
-        "Manhwa": MediaFormat.MANGA,
-        "Manhua": MediaFormat.MANGA,
-        "default": MediaFormat.UNKNOWN
-      };
+        Manhwa: MediaFormat.MANGA,
+        Manhua: MediaFormat.MANGA,
+        default: MediaFormat.UNKNOWN,
+    };
 
     private async fetchAnime(id: string, proxyURL: string = ""): Promise<AnimeInfo | undefined> {
         const data = await (
@@ -296,19 +296,18 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
                             japanese: $$("span:contains('Japanese:')").length > 0 ? $$("span:contains('Japanese:')").parent().text().replace($$("span:contains('Japanese:')").text(), "").replace(/\s+/g, " ").trim() : null,
                             alternatives: additionalTitles,
                         };
-                          
+
                         relations.push({
                             id,
                             format: this.formatMapping[format as keyof typeof this.formatMapping] ?? this.formatMapping["default"],
                             relationType: relation,
                             title: {
-                                  english: title.english,
-                                  native: title.japanese,
-                                  romaji: title.main,
-                              },
-                              type,
-                          });
-                          
+                                english: title.english,
+                                native: title.japanese,
+                                romaji: title.main,
+                            },
+                            type,
+                        });
 
                         resolve();
                     }),
@@ -760,16 +759,18 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
 
             if (!malId) return undefined;
 
-            switch (media.type) {
-                case MediaType.ANIME:
-                    this.fetchAnime(malId, proxyURL);
-                    return true;
-                case MediaType.MANGA:
-                    this.fetchManga(malId, proxyURL);
-                    return true;
-                default:
-                    return undefined;
-            }
+            // Actually test the proxy by attempting to fetch data
+            const response = await this.request(`${this.url}/anime/${malId}`, {
+                proxy: proxyURL,
+                isChecking: true,
+            });
+
+            const data = await response.text();
+
+            // Check if we got a valid response by looking for common MAL elements
+            const isValid = data.includes("myanimelist.net") && !data.includes("Access Denied") && !data.includes("banned");
+
+            return isValid;
         } catch {
             return false;
         }

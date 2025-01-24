@@ -517,7 +517,7 @@ export default class AniListBase extends BaseProvider {
                 variables,
             }),
         });
-        
+
         const data: IMedia = ((await req.json()) as { data: { Media: IMedia } }).data?.Media;
 
         if (data.isAdult) return undefined;

@@ -128,11 +128,11 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
                             episode
                         }
                     }
-                }`
+                }`,
             }),
         });
 
-        const anilistMetadata = await anilistResponse.json() as { data: { Media: { episodes: number; startDate: { year: number; month: number; day: number }; endDate: { year: number; month: number; day: number }; nextAiringEpisode: { episode: number } } } };
+        const anilistMetadata = (await anilistResponse.json()) as { data: { Media: { episodes: number; startDate: { year: number; month: number; day: number }; endDate: { year: number; month: number; day: number }; nextAiringEpisode: { episode: number } } } };
         const anilistMedia = anilistMetadata?.data?.Media;
 
         const episodes: IEpisode[] = [];
@@ -143,17 +143,9 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
             const seasons = data.seasons;
 
             const isLongRunning = episodesCount > 50;
-            const anilistStartDate = anilistMedia?.startDate ? new Date(
-                anilistMedia.startDate.year,
-                (anilistMedia.startDate.month || 1) - 1,
-                anilistMedia.startDate.day || 1
-            ) : null;
+            const anilistStartDate = anilistMedia?.startDate ? new Date(anilistMedia.startDate.year, (anilistMedia.startDate.month || 1) - 1, anilistMedia.startDate.day || 1) : null;
 
-            const anilistEndDate = anilistMedia?.endDate?.year ? new Date(
-                anilistMedia.endDate.year,
-                (anilistMedia.endDate.month || 1) - 1,
-                anilistMedia.endDate.day || 1
-            ) : null;
+            const anilistEndDate = anilistMedia?.endDate?.year ? new Date(anilistMedia.endDate.year, (anilistMedia.endDate.month || 1) - 1, anilistMedia.endDate.day || 1) : null;
 
             if (isLongRunning) {
                 for (const season of seasons) {
@@ -165,7 +157,7 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
                         const episodeDate = episode.air_date ? new Date(episode.air_date) : null;
 
                         if (anilistStartDate && episodeDate && episodeDate < anilistStartDate) continue;
-                        
+
                         if (anilistEndDate && episodeDate && episodeDate > anilistEndDate) continue;
 
                         episodes.push({
@@ -220,11 +212,11 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
 
                     if (anilistStartDate && episodeDate && episodeDate.getTime() - anilistStartDate.getTime() < -7 * 24 * 60 * 60 * 1000) {
                         continue;
-                    };
-                    
+                    }
+
                     if (anilistEndDate && episodeDate && episodeDate.getTime() - anilistEndDate.getTime() > 7 * 24 * 60 * 60 * 1000) {
                         continue;
-                    };
+                    }
 
                     episodes.push({
                         id: String(episode.id),
@@ -242,11 +234,11 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
                 if (episodes.length < episodesCount) {
                     for (const nextSeason of seasons) {
                         if (nextSeason.season_number <= bestSeason.season_number || nextSeason.episode_count === 0) continue;
-                        
+
                         const nextSeasonData = (await (await this.request(`${this.api}${tmdbId}/season/${nextSeason.season_number}?api_key=${this.apiKey}`)).json()) as ITMDBSeasonData;
                         for (const episode of nextSeasonData.episodes) {
                             if (episodes.length >= episodesCount) break;
-                            
+
                             const episodeDate = episode.air_date ? new Date(episode.air_date) : null;
                             if (anilistEndDate && episodeDate && episodeDate > anilistEndDate) continue;
 
@@ -262,7 +254,7 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
                                 rating: episode.vote_average,
                             });
                         }
-                        
+
                         if (episodes.length >= episodesCount) break;
                     }
                 }

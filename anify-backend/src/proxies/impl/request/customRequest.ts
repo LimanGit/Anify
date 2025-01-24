@@ -82,11 +82,38 @@ export async function customRequest(url: string, options: IRequestConfig = {}): 
 
             return response;
         } catch (error) {
+            clearTimeout(id);
+
+            // During proxy checks, we want to try all available proxies
             if (options.isChecking) {
+                // If we have provider info, try to get a new proxy
+                if (providerType && providerId) {
+                    // Keep trying to get a new proxy until we get one we haven't used
+                    let newProxy: string | null = null;
+                    let attempts = 0;
+                    const maxAttempts = 50; // Increase max attempts during proxy checks
+
+                    while (attempts < maxAttempts) {
+                        newProxy = getRandomProxy(providerType as ProviderType, providerId);
+                        if (!newProxy || !usedProxies.has(newProxy)) {
+                            break;
+                        }
+                        attempts++;
+                    }
+
+                    // If no more proxies available or all have been used, throw the error
+                    if (!newProxy || attempts >= maxAttempts) {
+                        throw new Error(`No more unused proxies available for ${providerType} ${providerId}`);
+                    }
+
+                    // Update the proxy and track it as used
+                    currentProxy = newProxy;
+                    usedProxies.add(newProxy);
+                    retryCount++;
+                    continue;
+                }
                 throw error;
             }
-
-            clearTimeout(id);
 
             // Check if this is a retriable error (connection refused, timeout, abort, etc.)
             const shouldRetryError =
@@ -150,10 +177,9 @@ export async function customRequest(url: string, options: IRequestConfig = {}): 
                 continue;
             }
 
-            // If it's not a retriable error or we don't have a proxy, just throw the error
             throw error;
         }
     }
 
-    throw new Error("Unexpected end of request loop");
+    throw new Error(`Max retries (${maxRetries}) reached for ${url}`);
 }
