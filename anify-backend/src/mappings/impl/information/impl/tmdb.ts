@@ -100,77 +100,172 @@ export default class TMDBInfo extends InformationProvider<IAnime | IManga, Anime
         const tmdbId = media.mappings.find((data) => {
             return data.providerId === "tmdb";
         })?.id;
+        const anilistId = media.id;
 
         if (!tmdbId) return undefined;
 
+        const anilistResponse = await this.request(`https://graphql.anilist.co`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify({
+                query: `query {
+                    Media(id: ${anilistId}) {
+                        startDate {
+                            year
+                            month
+                            day
+                        }
+                        endDate {
+                            year
+                            month
+                            day
+                        }
+                        episodes
+                        nextAiringEpisode {
+                            episode
+                        }
+                    }
+                }`
+            }),
+        });
+
+        const anilistMetadata = await anilistResponse.json() as { data: { Media: { episodes: number; startDate: { year: number; month: number; day: number }; endDate: { year: number; month: number; day: number }; nextAiringEpisode: { episode: number } } } };
+        const anilistMedia = anilistMetadata?.data?.Media;
+
         const episodes: IEpisode[] = [];
+        const episodesCount = (media as IAnime).totalEpisodes ?? anilistMedia?.episodes ?? anilistMedia?.nextAiringEpisode?.episode - 1;
 
         try {
             const data = (await (await this.request(`${this.api}${tmdbId}?api_key=${this.apiKey}`)).json()) as ITMDBResponse;
-
-            let seasonId = "";
-            let seasonNumber = 0;
-
             const seasons = data.seasons;
 
-            // Score-based season selection
-            let bestScore = -1;
-            let bestSeason = null;
+            const isLongRunning = episodesCount > 50;
+            const anilistStartDate = anilistMedia?.startDate ? new Date(
+                anilistMedia.startDate.year,
+                (anilistMedia.startDate.month || 1) - 1,
+                anilistMedia.startDate.day || 1
+            ) : null;
 
-            for (const season of seasons) {
-                let score = 0;
+            const anilistEndDate = anilistMedia?.endDate?.year ? new Date(
+                anilistMedia.endDate.year,
+                (anilistMedia.endDate.month || 1) - 1,
+                anilistMedia.endDate.day || 1
+            ) : null;
 
-                // Year proximity score (max 3 points)
-                if (season.air_date && media.year) {
-                    const seasonYear = new Date(season.air_date).getFullYear();
-                    const yearDiff = Math.abs(seasonYear - media.year);
-                    if (yearDiff === 0) score += 3;
-                    else if (yearDiff === 1) score += 2;
-                    else if (yearDiff <= 2) score += 1;
+            if (isLongRunning) {
+                for (const season of seasons) {
+                    if (season.episode_count === 0 || season.season_number === 0) continue;
+
+                    const seasonData = (await (await this.request(`${this.api}${tmdbId}/season/${season.season_number}?api_key=${this.apiKey}`)).json()) as ITMDBSeasonData;
+
+                    for (const episode of seasonData.episodes) {
+                        const episodeDate = episode.air_date ? new Date(episode.air_date) : null;
+
+                        if (anilistStartDate && episodeDate && episodeDate < anilistStartDate) continue;
+                        
+                        if (anilistEndDate && episodeDate && episodeDate > anilistEndDate) continue;
+
+                        episodes.push({
+                            id: String(episode.id),
+                            description: episode.overview,
+                            hasDub: false,
+                            img: episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : null,
+                            isFiller: false,
+                            number: episodes.length + 1,
+                            title: episode.name,
+                            updatedAt: episodeDate?.getTime() || Date.now(),
+                            rating: episode.vote_average,
+                        });
+                    }
+                }
+            } else {
+                let bestScore = -1;
+                let bestSeason = null;
+
+                for (const season of seasons) {
+                    if (season.episode_count === 0 || season.season_number === 0) continue;
+
+                    let score = 0;
+                    const seasonDate = season.air_date ? new Date(season.air_date) : null;
+
+                    if (seasonDate && anilistStartDate) {
+                        if (Math.abs(seasonDate.getTime() - anilistStartDate.getTime()) < 7776000000) {
+                            score += 5;
+                        }
+                    }
+
+                    if (episodesCount && season.episode_count === episodesCount) {
+                        score += 4;
+                    }
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestSeason = season;
+                    }
                 }
 
-                // Episode count match (3 points)
-                if (season.episode_count === (media as IAnime).totalEpisodes) {
-                    score += 3;
+                if (!bestSeason) {
+                    bestSeason = seasons.find((s) => s.episode_count > 0 && s.season_number > 0);
                 }
 
-                // Avoid seasons with 0 episodes
-                if (season.episode_count === 0) {
-                    continue;
+                if (!bestSeason) return undefined;
+
+                const seasonData = (await (await this.request(`${this.api}${tmdbId}/season/${bestSeason.season_number}?api_key=${this.apiKey}`)).json()) as ITMDBSeasonData;
+
+                for (const episode of seasonData.episodes) {
+                    const episodeDate = episode.air_date ? new Date(episode.air_date) : null;
+
+                    if (anilistStartDate && episodeDate && episodeDate.getTime() - anilistStartDate.getTime() < -7 * 24 * 60 * 60 * 1000) {
+                        continue;
+                    };
+                    
+                    if (anilistEndDate && episodeDate && episodeDate.getTime() - anilistEndDate.getTime() > 7 * 24 * 60 * 60 * 1000) {
+                        continue;
+                    };
+
+                    episodes.push({
+                        id: String(episode.id),
+                        description: episode.overview,
+                        hasDub: false,
+                        img: episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : null,
+                        isFiller: false,
+                        number: episodes.length + 1,
+                        title: episode.name,
+                        updatedAt: episodeDate?.getTime() || Date.now(),
+                        rating: episode.vote_average,
+                    });
                 }
 
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestSeason = season;
+                if (episodes.length < episodesCount) {
+                    for (const nextSeason of seasons) {
+                        if (nextSeason.season_number <= bestSeason.season_number || nextSeason.episode_count === 0) continue;
+                        
+                        const nextSeasonData = (await (await this.request(`${this.api}${tmdbId}/season/${nextSeason.season_number}?api_key=${this.apiKey}`)).json()) as ITMDBSeasonData;
+                        for (const episode of nextSeasonData.episodes) {
+                            if (episodes.length >= episodesCount) break;
+                            
+                            const episodeDate = episode.air_date ? new Date(episode.air_date) : null;
+                            if (anilistEndDate && episodeDate && episodeDate > anilistEndDate) continue;
+
+                            episodes.push({
+                                id: String(episode.id),
+                                description: episode.overview,
+                                hasDub: false,
+                                img: episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : null,
+                                isFiller: false,
+                                number: episodes.length + 1,
+                                title: episode.name,
+                                updatedAt: episodeDate?.getTime() || Date.now(),
+                                rating: episode.vote_average,
+                            });
+                        }
+                        
+                        if (episodes.length >= episodesCount) break;
+                    }
                 }
-            }
-
-            // If no good match found, try to find the first valid season
-            if (!bestSeason) {
-                bestSeason = seasons.find((s) => s.episode_count > 0 && s.season_number > 0);
-            }
-
-            if (!bestSeason) return undefined;
-
-            seasonId = String(bestSeason.id);
-            seasonNumber = bestSeason.season_number;
-
-            if (seasonId.length === 0) return undefined;
-
-            const seasonData = (await (await this.request(`${this.api}${tmdbId}/season/${seasonNumber}?api_key=${this.apiKey}`)).json()) as ITMDBSeasonData;
-
-            for (const episode of seasonData.episodes) {
-                episodes.push({
-                    id: String(episode.id),
-                    description: episode.overview,
-                    hasDub: false,
-                    img: `https://image.tmdb.org/t/p/w500${episode.still_path}`,
-                    isFiller: false,
-                    number: episode.episode_number,
-                    title: episode.name,
-                    updatedAt: new Date(episode.air_date).getTime(),
-                    rating: episode.vote_average,
-                });
             }
 
             return episodes;
