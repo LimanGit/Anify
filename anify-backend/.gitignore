@@ -32,6 +32,8 @@ database.json
 **/lib/impl/epub/impl/manga
 **/lib/impl/pdf/impl/manga
 bun.lockb
+# Bun text lock file for updated versions
+bun.lock
 animeProxies.json
 baseProxies.json
 mangaProxies.json
