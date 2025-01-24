@@ -56,6 +56,10 @@ const envSchema = z.object({
      * Mixdrop key for fetching videos.
      */
     MIXDROP_KEY: z.string().optional(),
+    /**
+     * Whether to enable proxy rotation.
+     */
+    PROXY_CRON_ENABLED: booleanFromEnv.optional().default("false"),
 
     /**
      * @description Enviorment variables for mapping providers.

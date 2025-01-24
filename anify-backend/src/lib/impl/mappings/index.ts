@@ -48,7 +48,7 @@ const loadMapping = async (data: { id: string; type: MediaType; formats: MediaFo
 
     // Usually if there is no title, the media doesn't exist.
     if (!baseData || ((!baseData.title?.english || baseData.title.english?.length === 0) && (!baseData.title?.romaji || baseData.title.romaji?.length === 0) && (!baseData.title?.native || baseData.title.native?.length === 0))) {
-        console.log(colors.red("Media not found. Skipping..."));
+        console.log(colors.red(`Media not found. ${baseData?.title?.english} ${baseData?.title?.romaji} ${baseData?.title?.native}`));
 
         await emitter.emitAsync(Events.COMPLETED_MAPPING_LOAD, []);
         return [];

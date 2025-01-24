@@ -763,13 +763,13 @@ export default class MALInformation extends InformationProvider<IAnime | IManga,
             switch (media.type) {
                 case MediaType.ANIME:
                     this.fetchAnime(malId, proxyURL);
+                    return true;
                 case MediaType.MANGA:
                     this.fetchManga(malId, proxyURL);
+                    return true;
                 default:
                     return undefined;
             }
-
-            return true;
         } catch {
             return false;
         }
