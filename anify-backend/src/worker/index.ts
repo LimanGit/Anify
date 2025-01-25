@@ -1,17 +1,25 @@
 import mappingQueue from "./impl/mappings";
-import createEntry from "./impl/entry";
-import searchQueue from "./impl/search";
 import seasonalQueue from "./impl/seasonal";
-import skipTimes from "./impl/skipTimes";
-import uploadManga from "./impl/pdf";
-import uploadNovel from "./impl/epub";
+import proxyQueue from "./impl/proxies";
+import epubQueue from "./impl/epub";
+import pdfQueue from "./impl/pdf";
+import { env } from "../env";
+
+export const init = () => {
+    mappingQueue.start();
+    seasonalQueue.start();
+    epubQueue.start();
+    pdfQueue.start();
+
+    if (env.PROXY_CRON_ENABLED) {
+        proxyQueue.start();
+    }
+};
 
 export default {
     mappingQueue,
-    createEntry,
-    searchQueue,
     seasonalQueue,
-    skipTimes,
-    uploadManga,
-    uploadNovel,
+    proxyQueue,
+    epubQueue,
+    pdfQueue,
 };

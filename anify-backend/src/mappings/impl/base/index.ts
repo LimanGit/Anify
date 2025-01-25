@@ -1,31 +1,55 @@
-import Http from "../../../helper/request";
-import { Format, Genres, ProviderType, Season, Type } from "../../../types/enums";
-import { AnimeInfo, MangaInfo } from "../../../types/types";
+import { MediaProvider } from "../../../types/impl/mappings/impl/mediaProvider";
+import { MediaFormat, MediaSeason, MediaType, ProviderType } from "../../../types";
+import type { ISeasonal } from "../../../types/impl/mappings";
+import type { AnimeInfo, MangaInfo } from "../../../types/impl/mappings/impl/mediaInfo";
 
-export default abstract class BaseProvider {
+export default abstract class BaseProvider extends MediaProvider {
     abstract id: string;
     abstract url: string;
-
-    abstract formats: Format[];
+    abstract formats: MediaFormat[];
 
     public providerType: ProviderType = ProviderType.BASE;
-    public customProxy: string | undefined;
-    public needsProxy: boolean = false;
-    public useGoogleTranslate: boolean = true;
-    public overrideProxy: boolean = false;
+    public preferredTitle: "english" | "romaji" | "native" = "english";
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async search(query: string, type: Type, formats: Format[], page: number, perPage: number): Promise<AnimeInfo[] | MangaInfo[] | undefined> {
+    async search(query: string, type: MediaType, formats: MediaFormat[], page: number, perPage: number): Promise<AnimeInfo[] | MangaInfo[] | undefined> {
         return undefined;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async searchAdvanced(query: string, type: Type, formats: Format[], page: number, perPage: number, genres: Genres[] = [], genresExcluded: Genres[] = [], season: Season = Season.UNKNOWN, year = 0, tags: string[] = [], tagsExcluded: string[] = []): Promise<AnimeInfo[] | MangaInfo[] | undefined> {
+    async searchAdvanced(
+        query: string,
+        type: MediaType,
+        formats: MediaFormat[],
+        page: number,
+        perPage: number,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        genres: string[] = [],
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        genresExcluded: string[] = [],
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        season: MediaSeason = MediaSeason.UNKNOWN,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        year = 0,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        tags: string[] = [],
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        tagsExcluded: string[] = [],
+    ): Promise<AnimeInfo[] | MangaInfo[] | undefined> {
         return undefined;
     }
 
-    getCurrentSeason(): Season {
-        return Season.SUMMER;
+    getCurrentSeason(): MediaSeason {
+        const month = new Date().getMonth();
+
+        if ((month >= 0 && month <= 1) || month === 11) {
+            return MediaSeason.WINTER;
+        } else if (month >= 2 && month <= 4) {
+            return MediaSeason.SPRING;
+        } else if (month >= 5 && month <= 7) {
+            return MediaSeason.SUMMER;
+        } else {
+            return MediaSeason.FALL;
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -35,30 +59,15 @@ export default abstract class BaseProvider {
 
     async fetchSeasonal(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        type: Type,
+        type: MediaType,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        formats: Format[],
+        formats: MediaFormat[],
     ): Promise<
         | {
-              trending: AnimeInfo[] | MangaInfo[];
-              seasonal: AnimeInfo[] | MangaInfo[];
-              popular: AnimeInfo[] | MangaInfo[];
-              top: AnimeInfo[] | MangaInfo[];
-          }
-        | undefined
-    > {
-        return undefined;
-    }
-
-    async fetchSchedule(): Promise<
-        | {
-              sunday: AnimeInfo[] | MangaInfo[];
-              monday: AnimeInfo[] | MangaInfo[];
-              tuesday: AnimeInfo[] | MangaInfo[];
-              wednesday: AnimeInfo[] | MangaInfo[];
-              thursday: AnimeInfo[] | MangaInfo[];
-              friday: AnimeInfo[] | MangaInfo[];
-              saturday: AnimeInfo[] | MangaInfo[];
+              trending: ISeasonal[];
+              seasonal: ISeasonal[];
+              popular: ISeasonal[];
+              top: ISeasonal[];
           }
         | undefined
     > {
@@ -66,20 +75,12 @@ export default abstract class BaseProvider {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async fetchIds(formats: Format[]): Promise<string[] | undefined> {
+    async fetchIds(formats: MediaFormat[]): Promise<string[] | undefined> {
         return undefined;
     }
 
-    async request(url: string, config: RequestInit = {}, proxyRequest?: boolean): Promise<Response> {
-        if (proxyRequest === undefined && this.needsProxy) proxyRequest = true;
-        if (proxyRequest !== undefined && proxyRequest === false && this.needsProxy) proxyRequest = false;
-        if (proxyRequest === undefined && !this.needsProxy) proxyRequest = false;
-        if (proxyRequest !== undefined && proxyRequest === true && !this.needsProxy) proxyRequest = true;
-
-        return Http.request(this.id, this.useGoogleTranslate, url, config, proxyRequest, 0, this.customProxy);
-    }
-
-    async proxyCheck(): Promise<boolean | undefined> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async proxyCheck(_proxyUrl: string): Promise<boolean | undefined> {
         return undefined;
     }
 }

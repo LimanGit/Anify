@@ -1,36 +1,21 @@
-import Http from "../../../helper/request";
-import { Format, ProviderType } from "../../../types/enums";
-import { Result } from "../../../types/types";
+import { type IProviderResult, MediaFormat, ProviderType } from "../../../types";
+import { MediaProvider } from "../../../types/impl/mappings/impl/mediaProvider";
 
-export default abstract class MetaProvider {
-    abstract rateLimit: number;
+export default abstract class MetaProvider extends MediaProvider {
     abstract id: string;
     abstract url: string;
-    abstract formats: Format[];
+    abstract formats: MediaFormat[];
 
     public providerType: ProviderType = ProviderType.META;
     public preferredTitle: "english" | "romaji" | "native" = "english";
 
-    public customProxy: string | undefined;
-    public needsProxy: boolean = false;
-    public useGoogleTranslate: boolean = true;
-    public overrideProxy: boolean = false;
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async search(query: string, format?: Format, year?: number): Promise<Result[] | undefined> {
+    async search(query: string, format?: MediaFormat, year?: number): Promise<IProviderResult[] | undefined> {
         return undefined;
     }
 
-    async request(url: string, config: RequestInit = {}, proxyRequest?: boolean): Promise<Response> {
-        if (proxyRequest === undefined && this.needsProxy) proxyRequest = true;
-        if (proxyRequest !== undefined && proxyRequest === false && this.needsProxy) proxyRequest = false;
-        if (proxyRequest === undefined && !this.needsProxy) proxyRequest = false;
-        if (proxyRequest !== undefined && proxyRequest === true && !this.needsProxy) proxyRequest = true;
-
-        return Http.request(this.id, this.useGoogleTranslate, url, config, proxyRequest, 0, this.customProxy);
-    }
-
-    async proxyCheck(): Promise<boolean | undefined> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async proxyCheck(_proxyUrl: string): Promise<boolean | undefined> {
         return undefined;
     }
 }

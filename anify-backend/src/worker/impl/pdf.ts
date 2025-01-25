@@ -1,14 +1,16 @@
 import colors from "colors";
-import QueueExecutor from "../../lib/executor";
-import { Chapter, Page } from "../../types/types";
-import { loadPDF } from "../../lib/impl/pdf";
+import QueueExecutor from "./helper/impl/executor";
+import type { IChapter } from "../../types";
+import type { IManga } from "../../types/impl/database/impl/schema/manga";
+import lib from "../../lib";
+import type { IPage } from "../../types/impl/mappings/impl/manga";
 
-const executor = new QueueExecutor<{ id: string; providerId: string; chapter: Chapter; pages: Page[] }>("manga-upload-executor")
+const executor = new QueueExecutor<{ media: IManga; providerId: string; chapter: IChapter; pages: IPage[] }>("pdf-executor")
     .executor(async (data) => {
-        const media = await loadPDF(data);
+        const media = await lib.loadPDF(data);
         return media;
     })
-    .callback((id) => console.debug(colors.green(`Finished uploading pages for ${id.chapter.id}.`)))
-    .error((err, id) => console.error(colors.red(`Error occurred while uploading pages for ${id.chapter.id}`), err))
+    .callback((data) => console.debug(colors.green(`Finished generating PDF for ${data.media.id} chapter ${data.chapter.id}.`)))
+    .error((err, data) => console.error(colors.red(`Error occurred while generating PDF for ${data.media.id} chapter ${data.chapter.id}.`), err))
     .interval(1000);
 export default executor;

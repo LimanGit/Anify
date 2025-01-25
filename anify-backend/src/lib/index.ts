@@ -1,18 +1,13 @@
-import EventEmitter2 from "eventemitter2";
+import content from "./impl/content";
+import loadMapping from "./impl/mappings";
+import loadSeasonal from "./impl/seasonal";
+import loadEpub from "./impl/epub";
+import loadPDF from "./impl/pdf";
 
-export enum Events {
-    COMPLETED_MAPPING_LOAD = "mapping.load.completed",
-    COMPLETED_SKIPTIMES_LOAD = "skiptimes.load.completed",
-    COMPLETED_SEARCH_LOAD = "search.load.completed",
-    COMPLETED_SEASONAL_LOAD = "seasonal.load.completed",
-    COMPLETED_ENTRY_CREATION = "entry.creation.completed",
-    COMPLETED_MANGA_UPLOAD = "manga.upload.completed",
-    COMPLETED_NOVEL_UPLOAD = "novel.upload.completed",
-
-    KEY_LIMIT_REACHED = "key.limit.reached",
-    KEY_UPDATE = "key.update",
-}
-
-const emitter = new EventEmitter2({});
-
-export default emitter;
+export default {
+    loadMapping,
+    loadSeasonal,
+    content,
+    loadEpub,
+    loadPDF,
+};

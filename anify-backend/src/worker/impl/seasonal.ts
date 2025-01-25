@@ -1,9 +1,9 @@
 import colors from "colors";
-import QueueExecutor from "../../lib/executor";
-import { Format, Type } from "../../types/enums";
-import { loadSeasonal } from "../../lib/impl/seasonal";
+import QueueExecutor from "./helper/impl/executor";
+import { MediaFormat, MediaType } from "../../types";
+import loadSeasonal from "../../lib/impl/seasonal";
 
-const executor = new QueueExecutor<{ type: Type; formats: Format[] }>("season-executor")
+const executor = new QueueExecutor<{ type: MediaType; formats: MediaFormat[] }>("season-executor")
     .executor(async (data) => {
         const media = await loadSeasonal(data);
         return media;
